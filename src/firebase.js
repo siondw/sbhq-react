@@ -1,6 +1,6 @@
 // Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
+import { initializeApp,  } from "firebase/app";
+import { getDatabase } from "firebase/database";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -9,6 +9,7 @@ import { getAnalytics } from "firebase/analytics";
 const firebaseConfig = {
   apiKey: "AIzaSyBqI0rYVeekxs1h_cEpzlHh92sr0tAbKUU",
   authDomain: "sbhq-26286.firebaseapp.com",
+  databaseURL: "https://sbhq-26286-default-rtdb.firebaseio.com/",
   projectId: "sbhq-26286",
   storageBucket: "sbhq-26286.appspot.com",
   messagingSenderId: "985898293549",
@@ -16,8 +17,7 @@ const firebaseConfig = {
   measurementId: "G-WRNFP0Q112"
 };
 
-// Initialize Firebase
-const firebase = initializeApp(firebaseConfig);
-const analytics = getAnalytics(firebase);
+const app = initializeApp(firebaseConfig);
+const database = getDatabase(app);
 
-export default firebase;
+export { database };

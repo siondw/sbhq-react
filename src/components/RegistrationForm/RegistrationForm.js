@@ -1,103 +1,63 @@
-import React, { useState, useEffect } from "react";
-import {
-  getAuth,
-  signInWithPhoneNumber,
-  RecaptchaVerifier,
-} from "firebase/auth";
+import React, { useState } from "react";
+import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
 
-import firebase from "../../firebase";
-import styles from "./Registrationform.module.css";
+import { database } from "../../firebase";
+
+import LargeButton from "../CustomButton/LargeButton";
+import styles from "./RegistrationForm.module.css";
+
 
 function RegistrationForm() {
   const [fullName, setFullName] = useState("");
   const [username, setUsername] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
+  const [password, setPassword] = useState("");
   const [errors, setErrors] = useState({});
 
   const auth = getAuth();
 
-  useEffect(() => {
-    const auth = getAuth(firebase);
-    let verifier;
-    if (!window.recaptchaVerifier) {
-      verifier = new RecaptchaVerifier(auth, "submit-button", {
-        size: "invisible",
-        callback: (response) => {
-          // reCAPTCHA solved, logic here
-        },
-      });
-      window.recaptchaVerifier = verifier;
-    }
-    return () => {
-      if (verifier) {
-        verifier.clear(); // Clean up the reCAPTCHA instance
-      }
-    };
-  }, []);
-
   const validateForm = () => {
     let newErrors = {};
-
     // Check if full name is empty
     if (!fullName.trim()) newErrors.fullName = "Full name is required.";
-
     // Check if username is empty
     if (!username.trim()) newErrors.username = "Username is required.";
-
-    // Check if phone number is valid
-    // Regex for phone number validation
-    const phoneRegex = /^(\d{3}-\d{3}-\d{4}|\d{10})$/;
-    if (!phoneNumber.trim()) {
-      newErrors.phoneNumber = "Phone number is required.";
-    } else if (!phoneRegex.test(phoneNumber.replace(/\s+/g, ""))) {
-      newErrors.phoneNumber = "Invalid phone number.";
+    // Check if password is valid
+    if (!password) {
+      newErrors.password = "Password is required.";
+    } else if (password.length < 6) { // Example: minimum 6 characters
+      newErrors.password = "Password must be at least 6 characters.";
     }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    const isValid = validateForm();
-    if (!isValid) return; // Stop submission if validation fails
+    if (!validateForm()) return; // Stop submission if validation fails
 
-    // Proceed with Firebase phone number authentication
-    // and additional user data storage
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, username, password);
+      // Handle user registration success
+      // You might want to update Firestore with the user's full name here
+    } catch (error) {
+      // Handle errors, such as username already in use
+      setErrors(prevErrors => ({ ...prevErrors, firebaseError: error.message }));
+    }
   };
 
   return (
     <form className={styles.form} onSubmit={handleSubmit}>
-      <input
-        className={styles.inputField}
-        type="text"
-        value={fullName}
-        onChange={(e) => setFullName(e.target.value)}
-        placeholder="Full Name"
-      />
+      <input className={styles.inputField} type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Full Name" />
       {errors.fullName && <div className="error">{errors.fullName}</div>}
 
-      <input
-        className={styles.inputField}
-        type="text"
-        value={username}
-        onChange={(e) => setUsername(e.target.value)}
-        placeholder="Username"
-      />
+      <input className={styles.inputField} type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Username" />
       {errors.username && <div className="error">{errors.username}</div>}
 
-      <input
-        className={styles.inputField}
-        type="tel"
-        value={phoneNumber}
-        onChange={(e) => setPhoneNumber(e.target.value)}
-        placeholder="Phone Number"
-      />
-      {errors.phoneNumber && <div className="error">{errors.phoneNumber}</div>}
+      <input className={styles.inputField} type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" />
+      {errors.password && <div className="error">{errors.password}</div>}
+      {errors.firebaseError && <div className="error">{errors.firebaseError}</div>}
 
-      <button id="submit-button" type="submit">
-        Register
-      </button>
+      <LargeButton text="Register" type="submit" />
     </form>
   );
 }

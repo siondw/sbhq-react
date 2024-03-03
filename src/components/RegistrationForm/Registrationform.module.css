@@ -9,7 +9,7 @@
   .inputField {
     background-color: var(--sernity);
     width: 300px;
-    height: 64px;
+    height: 56px;
     border-radius: 8px;
     color: var(--color-whitesmoke);
   }

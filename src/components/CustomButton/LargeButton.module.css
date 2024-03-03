@@ -1,0 +1,11 @@
+.custom {
+    width: 300px;
+    height: 56px;
+    background-color: var(--green); 
+    color: var(--color-whitesmoke); 
+    border: none;
+    border-radius: 5px;  /* Example border radius */
+    font-size: 18px;
+    cursor: pointer;
+    box-shadow: 0 0 10px var(--green); /* Adjust these values to change the glow effect */
+}
