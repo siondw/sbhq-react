@@ -15,6 +15,6 @@
   }
   .error {
     color: red;
-    /* Other error styles */
+    font-size: 10px;
   }
   

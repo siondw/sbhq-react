@@ -1,0 +1,24 @@
+.mainText {
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0px;
+}
+.header {
+    font-size: var(--h1-size); /* Adjust as needed */
+    font-weight: bold; /* Adjust as needed */
+    background-image: linear-gradient(to right, var(--header-gradient-start), var(--header-gradient-end));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-align: center; 
+}
+
+.subheader {
+    font-size: var(-font-size-xs); /* Adjust as needed */
+    font-weight: normal; /* Adjust as needed */
+    color: #666; /* Adjust as needed */
+    margin-bottom: 1em; /* Adjust as needed */
+    text-align: center;
+}

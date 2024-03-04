@@ -1,0 +1,19 @@
+.pregameScreen {
+    height: 100vh; 
+    justify-content: center;
+    align-items: center;
+}
+
+.screenContent {
+    display: flex;
+    padding-top: 64px;
+    flex: 1;
+    flex-direction: column;
+    gap: 32px;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .pregameGif {
+    justify-self: center;
+  }

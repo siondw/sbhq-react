@@ -1,19 +1,19 @@
 .header {
-    position: absolute;
+    position: sticky; /* Key change */
     top: 0;
-    width: 100%;
-    z-index: 1000;
-    align-self: stretch;
-    display: flex;
-    height: 64px;
-    background-color: rgba(255, 255, 255, 0.5);
-    flex-direction: row;
-    align-items: flex-end;
-    justify-content: space-between;
-    padding: 0 31px;
-    box-sizing: border-box;
-    gap: 4px;
-}
+    z-index: 1000; /* Ensure it stays above other content */
+    display: flex; 
+    height: 64px; 
+    width: 420px;
+    background-color: rgba(255, 255, 255, 0.5); 
+    flex-direction: row; 
+    align-items: flex-end; 
+    justify-content: space-between; 
+    padding: 0 32px;
+    box-sizing: border-box; 
+    gap: 4px; 
+  }
+  
 
 .userName {
     font-size: 12px;
@@ -21,12 +21,12 @@
     font-weight: medium;
 }
 
-.icon {
+.icons {
     display: flex;
     flex-direction: 'row';
     align-items: center;
     gap: 8px;
-    font-size: var(--font-size-mini);
+    font-size: var(--font-size-xs);
     color: var(--sernity);
     font-weight: medium;
 }

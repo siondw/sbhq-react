@@ -1,19 +1,20 @@
-import React from 'react';
-import styles from './Header.module.css'; // Assuming you moved the CSS to a separate file
+import React from "react";
+import styles from "./Header.module.css"; // Assuming you moved the CSS to a separate file
 
-const Header = () => (
+import MySvgComponent from "../SVG.js"
+
+
+function Header({ username }) {
+  return (
     <header className={styles.header}>
-        <div className={styles.icons}>
-            <img
-                className="trophy"
-                loading="eager"
-                alt="Trophy"
-                src="../../assets/trophy.png" 
-            />
-            <div>Superbowl HQ</div>
-        </div>
-        <div className={styles.userName}>Siondw ▼</div>
+      <div className={styles.icons}>
+        <MySvgComponent height="16px" width="16px" />
+        <div>Superbowl HQ</div>
+      </div>
+      {/* Check if the username exists before adding it */}
+      <div className={styles.userName}>{username && `${username} ▼`}</div>
     </header>
-);
+  );
+}
 
 export default Header;
