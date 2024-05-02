@@ -1,12 +1,21 @@
 import React, { useState } from 'react';
-import AnswerOption from '../AnswerOption/AnswerOption'; // Ensure the path is correct
+import AnswerOption from '../AnswerOption/AnswerOption'; 
 import styles from './AnswersContainer.module.css';
+import CustomButton from '../CustomButton/LargeButton'; 
 
 const AnswersContainer = ({ answers }) => {
     const [selected, setSelected] = useState(null);
 
     const handleSelect = (index) => {
-        setSelected(index); // Toggle selected state based on index
+        setSelected(index);
+    };
+
+    const handleSubmit = () => {
+        if(selected !== null) {
+            alert(`You submitted: ${answers[selected]}`);
+        } else {
+            alert('Please select an answer.');
+        }
     };
 
     return (
@@ -19,6 +28,7 @@ const AnswersContainer = ({ answers }) => {
                     onSelect={() => handleSelect(index)}
                 />
             ))}
+            <CustomButton className={styles.customSubmit} text="Submit Answer" onClick={handleSubmit} />
         </div>
     );
 };

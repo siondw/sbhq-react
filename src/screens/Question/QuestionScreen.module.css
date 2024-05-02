@@ -1,0 +1,46 @@
+.questionScreen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh; /* Ensures the screen takes at least the full height of the viewport */
+    overflow-x: hidden;
+}
+
+.header {
+    width: 100%; /* Full width */
+    margin-bottom: 20px; /* Space below the header */
+}
+
+.screenContent {
+    width: 100%; /* Full width */
+    max-width: 600px; /* Max width for larger screens, adjust as needed */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px; /* Padding inside the content area */
+    border-radius: 10px; /* Optional: rounded corners */
+}
+
+.questionText {
+    font-size: 18px; /* Adjust font size as necessary */
+    margin-bottom: 20px; /* Space below the question text */
+    text-align: center; /* Center-align the text */
+    color: var(--Sernity, #54627B);
+    text-align: center;
+    font-family: Poppins;
+    font-size: 18px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 27px; /* 150% */
+    max-width: 216px;
+}
+
+.questionBlock {
+    margin-top: 32px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    /* gap: 12px; Space between each question block */
+    width: 100%; /* Full width */
+}

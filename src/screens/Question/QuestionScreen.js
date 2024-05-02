@@ -7,20 +7,23 @@ import styles from "./QuestionScreen.module.css";
 function QuestionScreen() {
   var roundNumber = "1";
   var questionText = "What will be the result of this drive?";  // Mock question text
+  var username = "John Doe";  // Mock username
   const questionAnswers = ["Field Goal", "Touchdown", "Punt", "Other"];
 
   return (
     <div className={styles.questionScreen}>
-      <div className={styles.questionHeader}>
-        <Header />
+      <div className={styles.header}>
+        <Header username={username}/>
       </div>
       <div className={styles.screenContent}>
         <MainText
           header={`Round ${roundNumber}`}
-          subheader="Choose Wisely"
+          subheader="Choose Wisely!"
         />
-        <div className={styles.questionText}>{questionText}</div> {/* Displaying the question text */}
-        <AnswersContainer answers={questionAnswers} />
+        <div className={styles.questionBlock}> {/* New wrapping div */}
+          <div className={styles.questionText}>{questionText}</div> {/* Displaying the question text */}
+          <AnswersContainer answers={questionAnswers} />
+        </div>
       </div>
     </div>
   );

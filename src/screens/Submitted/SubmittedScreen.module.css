@@ -1,0 +1,29 @@
+.submittedScreen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100vh;
+    overflow-x: hidden;
+}
+
+.headerContainer {
+    width: 100%;  
+    margin-bottom: 20px; 
+}
+
+.mainTextContainer {
+    width: 100%;      display: flex;
+    justify-content: center;
+    margin-bottom: 20px;  
+    padding: 20px;
+}
+
+.gifContainer {
+    width: 100%;  
+    display: flex;
+    justify-content: center;
+}
+
+.ballGif {
+    justify-self: center;
+}
