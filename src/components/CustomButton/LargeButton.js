@@ -1,5 +1,5 @@
 import React from 'react'
-import styles from './LargeButton.module.css'; // Create a CSS file for styling
+import styles from './LargeButton.module.css'; 
 
 const CustomButton = ({ text, onClick }) => {
   return (

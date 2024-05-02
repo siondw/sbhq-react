@@ -6,6 +6,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import RegistrationScreen from "./screens/Registration/RegistrationScreen";
 import LoginScreen from "./screens/Login/LoginScreen";
 import PregameScreen from "./screens/Pregame/PregameScreen";
+import QuestionScreen from "./screens/Question/QuestionScreen";
 
 import reportWebVitals from "./reportWebVitals";
 
@@ -17,6 +18,7 @@ root.render(
         <Route path="/register" element={<RegistrationScreen />} />
         <Route path="/login" element={<LoginScreen />} />
         <Route path="/pregame" element={<PregameScreen />} />
+        <Route path="/question" element={<QuestionScreen />} />
         {/* Redirect to /login as the default route */}
         <Route path="/" element={<Navigate replace to="/pregame" />} />
       </Routes>

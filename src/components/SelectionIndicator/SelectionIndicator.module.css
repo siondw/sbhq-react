@@ -1,0 +1,16 @@
+.outerRing {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid white; /* You can change the color and size of the border as needed */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.innerDot {
+    width: 12px;
+    height: 12px;
+    background-color: white; /* Change this color if needed */
+    border-radius: 50%;
+}

@@ -4,7 +4,7 @@
     z-index: 1000; /* Ensure it stays above other content */
     display: flex; 
     height: 64px; 
-    width: 420px;
+    width: 100%;
     background-color: rgba(255, 255, 255, 0.5); 
     flex-direction: row; 
     align-items: flex-end; 
