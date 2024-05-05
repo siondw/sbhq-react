@@ -11,14 +11,19 @@ function RegistrationForm() {
   const [phoneNumber, setPhoneNumber] = useState("+1 ");
   const [errors, setErrors] = useState({});
   const [verifier, setVerifier] = useState(null);
+  
 
   useEffect(() => {
+    console.log('auth in verifier creation:', auth); 
     
-    window.recaptchaVerifier = new RecaptchaVerifier(auth, 'sign-in-button', {
-        'size': 'invisible',
-        'callback': handleSubmit 
+
+    const verifier = new RecaptchaVerifier(auth, 'sign-in-button', { 
+          'size': 'invisible',
+          'callback': handleSubmit 
     });
-}, []); // Execute only once after the component renders
+    setVerifier(verifier); // Store the verifier in state
+}, []); 
+
 
   const formatPhoneNumber = (value) => {
     if (!value) return "+1 ";
@@ -55,9 +60,10 @@ function RegistrationForm() {
   };
 
   const handleSubmit = async (event) => {
-    event.preventDefault();
-    if (!validateForm()) return; // Stop submission if validation fails
+    console.log('auth in handleSubmit:', auth);
 
+    event.preventDefault();
+    if (!validateForm()) return; 
     const formattedUsername = username.trim().toLowerCase();
 
     try {

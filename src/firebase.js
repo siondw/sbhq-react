@@ -24,3 +24,10 @@ export const auth = getAuth(app);
 
 // Initialize database 
 export const database = getDatabase(app); 
+
+// In your firebase.js (or where you initialize Firebase) 
+console.log('Firebase app:', app); 
+
+console.log('auth type:', typeof auth); 
+
+
