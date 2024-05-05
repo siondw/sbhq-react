@@ -7,23 +7,28 @@ import GameStatsSummary from "../../components/GameStatsSummary/GameStatsSummary
 
 function CorrectScreen() {
   const gradientStyle = "linear-gradient(180deg, #01710C 0%, #54627B 100%)"; // Example gradient
-  const numberOfRemainingPlayers = 10; // Example data
-  const roundNumber = 3; // Example data
+  const numberOfRemainingPlayers = 10;
+  const roundNumber = 3;
 
   return (
     <div className={styles.correctScreen}>
-      <Header />
+      <Header username={"test"} />
       <div className={styles.content}>
         <div className={styles.textWithIcon}>
           <span className={styles.correctText}>Correct</span>
           <span className={styles.checkMarkIcon}>✔️</span>
         </div>
         <MainText
-          header="" // Keep empty if "Correct" text is handled separately
+          header=""
           subheader="Stay Tuned for the Next Question..."
-          gradient={gradientStyle} // Pass the gradient as a prop
+          gradient={gradientStyle}
         />
       </div>
+      <GameStatsSummary
+        numberOfRemainingPlayers={numberOfRemainingPlayers}
+        roundNumber={roundNumber}
+        className={styles.gameStatsSummary}
+      />
     </div>
   );
 }

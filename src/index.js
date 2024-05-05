@@ -9,6 +9,7 @@ import PregameScreen from "./screens/Pregame/PregameScreen";
 import QuestionScreen from "./screens/Question/QuestionScreen";
 import SubmittedScreen from "./screens/Submitted/SubmittedScreen";
 import CorrectScreen from "./screens/Correct/CorrectScreen";
+import EliminatedScreen from "./screens/Eliminated/EliminatedScreen";
 
 import reportWebVitals from "./reportWebVitals";
 
@@ -23,6 +24,7 @@ root.render(
         <Route path="/question" element={<QuestionScreen />} />
         <Route path="/submitted" element={<SubmittedScreen />} />
         <Route path="/correct" element={<CorrectScreen />} />
+        <Route path="/eliminated" element={<EliminatedScreen />} />
         {/* Redirect to /login as the default route */}
         <Route path="/" element={<Navigate replace to="/pregame" />} />
       </Routes>

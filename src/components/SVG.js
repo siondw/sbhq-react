@@ -6,6 +6,7 @@ import leaderboard from "../assets/leaderboard.svg";
 import person from "../assets/person.svg";
 import triangle from "../assets/triangle.svg";
 import x from "../assets/x.svg";
+import DollarSignIcon from "../assets/DollarSignIcon.svg";
 
 
 
@@ -36,6 +37,9 @@ const MySvgComponent = ({ iconType, width, height, fill }) => {
                 break;
             case 'x':
                 SvgIcon = x;
+                break;
+            case 'DollarSignIcon':
+                SvgIcon = DollarSignIcon;
                 break;
             default:
                 SvgIcon = trophy; // Default icon

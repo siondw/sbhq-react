@@ -1,4 +1,4 @@
-.correctScreen {
+.eliminatedScreen {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -19,23 +19,23 @@
     font-size: 24px;  
 }
 
-.correctText {
+.eliminatedText {
     font-family: 'Poppins', sans-serif;
     font-size: 48px;
     font-weight: 600;
-    background: linear-gradient(180deg, #01710C 0%, #54627B 100%);
+    background: linear-gradient(167deg, #710117 29.79%, #54627B 90.89%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
 }
 
-.checkMarkIcon {
+.xIcon {
     font-size: 43px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-left: 5px;  
-    background: linear-gradient(180deg, #01710C 0%, #54627B 100%);
+    margin-left: 12px;  
+    background: linear-gradient(167deg, #710117 29.79%, #54627B 90.89%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -43,6 +43,3 @@
     height: 43px;
 }
 
-.gameStatsSummary {
-    margin-top: 8px
-}

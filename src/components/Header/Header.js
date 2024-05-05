@@ -12,7 +12,7 @@ function Header({ username }) {
         <div style={{ fontSize: "16px" }}>Superbowl HQ</div>
       </div>
       {/* Check if the username exists before adding it */}
-      <div className={styles.userName}>{username && `${username} ▼`}</div>
+      <div className={styles.userName}>{username}</div>
     </header>
   );
 }

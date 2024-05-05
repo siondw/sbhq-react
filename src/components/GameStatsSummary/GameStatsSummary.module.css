@@ -16,3 +16,15 @@
     width: 18px; /* Set the width of the icons */
     height: 18px; /* Set the height of the icons */
 }
+
+.text {
+    font-family: Poppins;
+    font-size: 18px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 27px; /* 150% */
+    background: var(--green-serenity, linear-gradient(180deg, #01710C 0%, #54627B 100%));
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}

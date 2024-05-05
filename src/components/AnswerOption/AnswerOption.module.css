@@ -22,3 +22,9 @@
     font-weight: 500;
     line-height: 36px; /* 300% */
 }
+
+
+.answerOptionClicked {
+    transform: scale(0.95); /* This will slightly shrink the element */
+    transition: transform 0.2s ease; /* This will animate the shrinking */
+}

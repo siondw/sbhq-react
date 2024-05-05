@@ -1,29 +1,54 @@
-import React, { useState } from "react";
-
+import React, { useState, useEffect } from "react";
 import LargeButton from "../CustomButton/LargeButton";
 import styles from "./RegistrationForm.module.css";
+import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
+import { registerUser } from '../../services/RegisterUser';
+
+import { auth } from "../../firebase";
 
 function RegistrationForm() {
-  const [fullName, setFullName] = useState("");
   const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("+1 ");
   const [errors, setErrors] = useState({});
+  const [verifier, setVerifier] = useState(null);
+
+  useEffect(() => {
+    
+    window.recaptchaVerifier = new RecaptchaVerifier(auth, 'sign-in-button', {
+        'size': 'invisible',
+        'callback': handleSubmit 
+    });
+}, []); // Execute only once after the component renders
+
+  const formatPhoneNumber = (value) => {
+    if (!value) return "+1 ";
+    const cleaned = value.replace(/[^\d+]/g, "");
+    if (cleaned === "+") return "+1 ";
+    if (!cleaned.startsWith("+")) return `+1 ${cleaned}`;
+
+    const number = cleaned.slice(2); // Remove country code +1
+    if (number.length < 4) {
+      return `+1 (${number}`;
+    }
+    if (number.length < 7) {
+      return `+1 (${number.slice(0, 3)}) ${number.slice(3)}`;
+    }
+    // Limiting input to the maximum length of a US phone number
+    const formattedNumber = `+1 (${number.slice(0, 3)}) ${number.slice(3, 6)}-${number.slice(6, 10)}`;
+    return number.length >= 10 ? formattedNumber : `+1 (${number.slice(0, 3)}) ${number.slice(3, 6)}-${number.slice(6)}`;
+  };
 
   const validateForm = () => {
     let newErrors = {};
-    // Check if full name is empty
-    if (!fullName.trim()) newErrors.fullName = "Full name is required.";
-    // Check if username is empty
-    if (!username.trim()) newErrors.username = "Username is required.";
-    // Check if password is valid
-    if (!password) {
-      newErrors.password = "Password is required.";
-    } else if (password.length < 6) {
-      // Example: minimum 6 characters
-      newErrors.password = "Password must be at least 6 characters.";
-    } else if (password !== confirmPassword) {
-      newErrors.password = "Passwords do not match.";
+    // Check if username is valid
+    if (!username.trim()) {
+      newErrors.username = "Username is required.";
+    } else if (username.length < 4 || username.length > 20) {
+      newErrors.username = "Username must be 4-20 characters long.";
+    }
+    // Check if phone number is valid
+    if (phoneNumber.length < 1) { // "+1 (XXX) XXX-XXXX" 18 characters
+      newErrors.phoneNumber = "Complete phone number is required.";
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -31,25 +56,28 @@ function RegistrationForm() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-
     if (!validateForm()) return; // Stop submission if validation fails
 
-    console.log("Form submitted");
+    const formattedUsername = username.trim().toLowerCase();
 
-    //TODO: Add user to Firebase Authentication and Database
+    try {
+      signInWithPhoneNumber(auth, phoneNumber, verifier)
+        .then((confirmationResult) => {
+          const verificationCode = prompt('Please enter the verification code you received');
+          return confirmationResult.confirm(verificationCode);
+        })
+        .then((result) => {
+          registerUser(formattedUsername, phoneNumber);
+          console.log("User registered with UID:", result.user.uid);
+        });
+    } catch (error) {
+      console.error("Failed to sign in:", error);
+      setErrors(prevErrors => ({ ...prevErrors, phoneNumber: 'Failed to verify phone number.' }));
+    }
   };
 
   return (
     <form className={styles.form} onSubmit={handleSubmit}>
-      <input
-        className={styles.inputField}
-        type="text"
-        value={fullName}
-        onChange={(e) => setFullName(e.target.value)}
-        placeholder="Full Name"
-      />
-      {errors.fullName && <div className={styles.error}>{errors.fullName}</div>}
-
       <input
         className={styles.inputField}
         type="text"
@@ -61,25 +89,18 @@ function RegistrationForm() {
 
       <input
         className={styles.inputField}
-        type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        placeholder="Password"
+        type="text"
+        value={phoneNumber}
+        onChange={(e) => {
+          if (e.target.value.length <= 18) {
+            setPhoneNumber(formatPhoneNumber(e.target.value));
+          }
+        }}
+        placeholder="Phone Number"
       />
-      {errors.password && <div className={styles.error}>{errors.password}</div>}
+      {errors.phoneNumber && <div className={styles.error}>{errors.phoneNumber}</div>}
 
-      <input
-        className={styles.inputField}
-        type="password"
-        value={confirmPassword}
-        onChange={(e) => setConfirmPassword(e.target.value)}
-        placeholder="Confirm Password"
-      />
-      {errors.confirmPassword && (
-        <div className={styles.error}>{errors.confirmPassword}</div>
-      )}
-
-      <LargeButton text="Register" type="submit" onClick={handleSubmit} />
+      <LargeButton id="sign-in-button" text="Register" type="submit" onClick={handleSubmit} />
     </form>
   );
 }

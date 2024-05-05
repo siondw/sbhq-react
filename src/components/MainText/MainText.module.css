@@ -17,7 +17,7 @@
 
 .subheader {
     font-size: var(-font-size-xs); /* Adjust as needed */
-    font-weight: normal; /* Adjust as needed */
+    font-weight: 600px; /* Adjust as needed */
     color: #666; /* Adjust as needed */
     margin-bottom: 1em; /* Adjust as needed */
     text-align: center;
