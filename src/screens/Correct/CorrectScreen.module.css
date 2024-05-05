@@ -1,0 +1,44 @@
+.correctScreen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100vh;
+}
+
+.content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin-top: 48px;
+}
+
+.textWithIcon {
+    display: flex;
+    align-items: center;
+    font-size: 24px;  
+}
+
+.correctText {
+    font-family: 'Poppins', sans-serif;
+    font-size: 48px;
+    font-weight: 600;
+    background: linear-gradient(180deg, #01710C 0%, #54627B 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.checkMarkIcon {
+    font-size: 43px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 5px;  
+    background: linear-gradient(180deg, #01710C 0%, #54627B 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    width: 43px;  
+    height: 43px;
+}

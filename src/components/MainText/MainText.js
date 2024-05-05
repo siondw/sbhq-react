@@ -1,16 +1,18 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import styles from './MainText.module.css'; // Adjust the path to your CSS file
+import styles from './MainText.module.css';
 
-function MainText({ header, subheader, linkPath = '', linkText = '' }) {
+function MainText({ header, subheader, linkPath, linkText, gradient }) {
+  const textStyle = gradient ? { background: gradient, color: 'transparent', WebkitBackgroundClip: 'text', backgroundClip: 'text' } : {};
+  
   return (
     <div className={styles.mainText}>
-      <div className={styles.header}>{header}</div>
-      <div className={styles.subheader}>
+      <div className={styles.header} style={textStyle}>{header}</div>
+      <div className={styles.subheader} style={textStyle}>
         {subheader}
-        {linkPath && linkText ? (
+        {linkPath && linkText && (
           <Link to={linkPath} className={styles.link}>{linkText}</Link>
-        ) : null}
+        )}
       </div>
     </div>
   );

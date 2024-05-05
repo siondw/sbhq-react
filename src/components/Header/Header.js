@@ -9,7 +9,7 @@ function Header({ username }) {
     <header className={styles.header}>
       <div className={styles.icons}>
         <MySvgComponent height="16px" width="16px" />
-        <div>Superbowl HQ</div>
+        <div style={{ fontSize: "16px" }}>Superbowl HQ</div>
       </div>
       {/* Check if the username exists before adding it */}
       <div className={styles.userName}>{username && `${username} ▼`}</div>
