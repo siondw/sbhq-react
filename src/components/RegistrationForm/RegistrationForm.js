@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import LargeButton from "../CustomButton/LargeButton";
 import styles from "./RegistrationForm.module.css";
 
@@ -6,6 +7,8 @@ import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 import { registerUser } from "../../services/UserServices";
 
 import { auth } from "../../firebase";
+import { useAuth } from "./AuthContext";
+
 import {
   checkUserExists,
   addUserToDB,
@@ -26,6 +29,12 @@ function RegistrationForm() {
     });
     setVerifier(verifier); // Store the verifier in state
   }, []);
+
+  const navigate = useNavigate();
+
+  const navigateToVerificationScreen = (confirmationResult, phoneNumber) => {
+    navigate("/verify", { state: { confirmationResult, phoneNumber } });
+  };
 
   const formatPhoneNumber = (value) => {
     if (!value) return "+1 ";
@@ -67,40 +76,25 @@ function RegistrationForm() {
     return Object.keys(newErrors).length === 0;
   };
 
+  const { setConfirmationResult } = useAuth();
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (!validateForm()) return;
-    const formattedUsername = username.trim().toLowerCase();
 
     try {
-      signInWithPhoneNumber(auth, phoneNumber, verifier)
-        .then((confirmationResult) => {
-          const verificationCode = prompt(
-            "Please enter the verification code you received"
-          );
-          return confirmationResult.confirm(verificationCode);
-        })
-        .then(async (result) => {
-          const uid = result.user.uid; // This is where you get the uid
-          console.log("User registered with UID:", uid);
-
-          // Check if the user already exists in the database
-          const exists = await checkUserExists(uid);
-          if (!exists) {
-            // Add the user to the database if they don't exist
-            await addUserToDB(uid, formattedUsername, phoneNumber);
-            console.log("New user added to the database.");
-          } else {
-            // Optionally fetch user details if needed
-            const userDetails = await getUserDetails(uid);
-            console.log("User already exists, details retrieved:", userDetails);
-          }
-        });
+      const confirmationResult = await signInWithPhoneNumber(
+        auth,
+        phoneNumber,
+        verifier
+      );
+      setConfirmationResult(confirmationResult);
+      navigate("/verify");
     } catch (error) {
-      console.error("Failed to sign in:", error);
+      console.error("Failed to send verification code:", error);
       setErrors((prevErrors) => ({
         ...prevErrors,
-        phoneNumber: "Failed to verify phone number.",
+        phoneNumber: "Failed to send verification code. " + error.message,
       }));
     }
   };

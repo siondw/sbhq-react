@@ -17,26 +17,30 @@ import CorrectScreen from "./screens/Correct/CorrectScreen";
 import EliminatedScreen from "./screens/Eliminated/EliminatedScreen";
 import VerificationScreen from "./screens/VerificationScreen/VerificationScreen";
 
-import reportWebVitals from "./reportWebVitals";
+import { AuthProvider } from "./components/RegistrationForm/AuthContext"; // Adjust the path as necessary
 
+import reportWebVitals from "./reportWebVitals";
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
     <Router>
-      <Routes>
-        <Route path="/register" element={<RegistrationScreen />} />
-        <Route path="/login" element={<LoginScreen />} />
-        <Route path="/pregame" element={<PregameScreen />} />
-        <Route path="/question" element={<QuestionScreen />} />
-        <Route path="/submitted" element={<SubmittedScreen />} />
-        <Route path="/correct" element={<CorrectScreen />} />
-        <Route path="/eliminated" element={<EliminatedScreen />} />
-        <Route path="/verify" element={<VerificationScreen />} />
-        {/* Redirect to /login as the default route */}
-        <Route path="/" element={<Navigate replace to="/pregame" />} />
-      </Routes>
+      <AuthProvider>
+        {" "}
+        {/* Wrap all routes within AuthProvider */}
+        <Routes>
+          <Route path="/register" element={<RegistrationScreen />} />
+          <Route path="/login" element={<LoginScreen />} />
+          <Route path="/pregame" element={<PregameScreen />} />
+          <Route path="/question" element={<QuestionScreen />} />
+          <Route path="/submitted" element={<SubmittedScreen />} />
+          <Route path="/correct" element={<CorrectScreen />} />
+          <Route path="/eliminated" element={<EliminatedScreen />} />
+          <Route path="/verify" element={<VerificationScreen />} />
+          {/* Redirect to /login as the default route */}
+          <Route path="/" element={<Navigate replace to="/pregame" />} />
+        </Routes>
+      </AuthProvider>
     </Router>
   </React.StrictMode>
 );
-
 reportWebVitals();

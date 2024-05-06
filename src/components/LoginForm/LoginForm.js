@@ -14,21 +14,21 @@ function LoginScreen() {
 
   return (
     <form className={styles.form} onSubmit={handleSubmit}>
-      <input 
-        className={styles.inputField} 
-        type="text" 
-        value={username} 
-        onChange={(e) => setUsername(e.target.value)} 
-        placeholder="Username" 
+      <input
+        className={styles.inputField}
+        type="text"
+        value={username}
+        onChange={(e) => setUsername(e.target.value)}
+        placeholder="Username"
       />
       {errors.username && <div className={styles.error}>{errors.username}</div>}
 
-      <input 
-        className={styles.inputField} 
-        type="password" 
-        value={password} 
-        onChange={(e) => setPassword(e.target.value)} 
-        placeholder="Password" 
+      <input
+        className={styles.inputField}
+        type="password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        placeholder="Password"
       />
       {errors.password && <div className={styles.error}>{errors.password}</div>}
 
