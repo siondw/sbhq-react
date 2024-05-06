@@ -20,8 +20,8 @@ function QuestionScreen() {
           header={`Round ${roundNumber}`}
           subheader="Choose Wisely!"
         />
-        <div className={styles.questionBlock}> {/* New wrapping div */}
-          <div className={styles.questionText}>{questionText}</div> {/* Displaying the question text */}
+        <div className={styles.questionBlock}> 
+          <div className={styles.questionText}>{questionText}</div> 
           <AnswersContainer answers={questionAnswers} />
         </div>
       </div>

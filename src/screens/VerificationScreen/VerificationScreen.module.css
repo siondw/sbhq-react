@@ -1,0 +1,22 @@
+.verificationScreen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100vh;
+    overflow-x: hidden;
+}
+
+.content {
+    margin-top: 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    border: 0px;
+}
+
+.header {
+    width: 100%; 
+    margin-bottom: 20px; 
+} 
+

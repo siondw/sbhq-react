@@ -1,0 +1,39 @@
+.pinInputContainer {
+    display: flex;
+    justify-content: space-between;
+    width: auto;
+    gap: 8px;
+
+  }
+  
+  .pinInputField {
+    width: 48px;
+    height: 72px;
+    text-align: center;
+    font-size: 44px;
+    font-weight: 600;
+    color: var(--Serenity, #54627B);
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 5px;
+    line-height: 72px;
+    border: 0px;
+  }
+  
+  @media screen and (max-width: 320px) {
+    .pinInputContainer {
+      justify-content: center; /* Center the items horizontally */
+      flex-wrap: wrap; /* Allow items to wrap to the next row */
+    }
+  
+    .pinInputField {
+      width: 40px; /* Adjust the width for smaller screens */
+      height: 60px; /* Adjust the height for smaller screens */
+      font-size: 32px; /* Adjust the font size for smaller screens */
+      line-height: 60px; /* Adjust the line height to match the height */
+      margin-bottom: 8px; /* Add margin bottom for spacing between rows */
+    }
+  
+    .pinInputField:nth-child(3n) {
+      margin-right: 0; /* Remove the right margin for every 3rd item */
+    }
+  }

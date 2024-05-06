@@ -6,7 +6,11 @@ import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 import { registerUser } from "../../services/UserServices";
 
 import { auth } from "../../firebase";
-import { checkUserExists, addUserToDB, getUserDetails } from "../../services/UserServices";
+import {
+  checkUserExists,
+  addUserToDB,
+  getUserDetails,
+} from "../../services/UserServices";
 
 function RegistrationForm() {
   const [username, setUsername] = useState("");
@@ -64,41 +68,42 @@ function RegistrationForm() {
   };
 
   const handleSubmit = async (event) => {
-
     event.preventDefault();
     if (!validateForm()) return;
     const formattedUsername = username.trim().toLowerCase();
 
     try {
-        signInWithPhoneNumber(auth, phoneNumber, verifier)
-            .then((confirmationResult) => {
-                const verificationCode = prompt("Please enter the verification code you received");
-                return confirmationResult.confirm(verificationCode);
-            })
-            .then(async (result) => {
-                const uid = result.user.uid; // This is where you get the uid
-                console.log("User registered with UID:", uid);
+      signInWithPhoneNumber(auth, phoneNumber, verifier)
+        .then((confirmationResult) => {
+          const verificationCode = prompt(
+            "Please enter the verification code you received"
+          );
+          return confirmationResult.confirm(verificationCode);
+        })
+        .then(async (result) => {
+          const uid = result.user.uid; // This is where you get the uid
+          console.log("User registered with UID:", uid);
 
-                // Check if the user already exists in the database
-                const exists = await checkUserExists(uid);
-                if (!exists) {
-                    // Add the user to the database if they don't exist
-                    await addUserToDB(uid, formattedUsername, phoneNumber);
-                    console.log("New user added to the database.");
-                } else {
-                    // Optionally fetch user details if needed
-                    const userDetails = await getUserDetails(uid);
-                    console.log("User already exists, details retrieved:", userDetails);
-                }
-            });
+          // Check if the user already exists in the database
+          const exists = await checkUserExists(uid);
+          if (!exists) {
+            // Add the user to the database if they don't exist
+            await addUserToDB(uid, formattedUsername, phoneNumber);
+            console.log("New user added to the database.");
+          } else {
+            // Optionally fetch user details if needed
+            const userDetails = await getUserDetails(uid);
+            console.log("User already exists, details retrieved:", userDetails);
+          }
+        });
     } catch (error) {
-        console.error("Failed to sign in:", error);
-        setErrors((prevErrors) => ({
-            ...prevErrors,
-            phoneNumber: "Failed to verify phone number."
-        }));
+      console.error("Failed to sign in:", error);
+      setErrors((prevErrors) => ({
+        ...prevErrors,
+        phoneNumber: "Failed to verify phone number.",
+      }));
     }
-};
+  };
 
   return (
     <form className={styles.form} onSubmit={handleSubmit}>
@@ -126,11 +131,7 @@ function RegistrationForm() {
         <div className={styles.error}>{errors.phoneNumber}</div>
       )}
 
-      <LargeButton
-        id="sign-in-button"
-        text="Register"
-        type="submit"
-      />
+      <LargeButton id="sign-in-button" text="Register" type="submit" />
     </form>
   );
 }
