@@ -1,4 +1,4 @@
-import LoginForm from "../../components/LoginForm/LoginForm";
+import LoginForm from "../../components/RegistrationForm/RegistrationForm";
 import Header from "../../components/Header/Header";
 import MainText from "../../components/MainText/MainText";
 
@@ -16,7 +16,7 @@ function LoginScreen() {
         </div> 
         <div className={styles.screenContent}>
           <MainText header="Sign In" subheader="Don't have an account? " linkPath={"/register"} linkText={"Create One Here!"} /> 
-          <LoginForm /> 
+          <LoginForm isRegistration={false} /> 
         </div>
       </div>
     );

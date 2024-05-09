@@ -4,26 +4,16 @@ import LargeButton from "../CustomButton/LargeButton";
 import styles from "./RegistrationForm.module.css";
 
 import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
-import { registerUser } from "../../services/UserServices";
-
-import { auth } from "../../firebase";
 import { useAuth } from "./AuthContext";
+import { auth } from "../../firebase";
 
-import {
-  checkUserExists,
-  addUserToDB,
-  getUserDetails,
-} from "../../services/UserServices";
-
-function RegistrationForm() {
+function RegistrationForm({ isRegistration = true }) {
   const [username, setUsername] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("+1 ");
   const [errors, setErrors] = useState({});
   const [verifier, setVerifier] = useState(null);
 
   useEffect(() => {
-    console.log("auth in verifier creation:", auth);
-
     const verifier = new RecaptchaVerifier(auth, "sign-in-button", {
       size: "invisible",
     });
@@ -32,9 +22,7 @@ function RegistrationForm() {
 
   const navigate = useNavigate();
 
-  const navigateToVerificationScreen = (confirmationResult, phoneNumber) => {
-    navigate("/verify", { state: { confirmationResult, phoneNumber } });
-  };
+  const { setConfirmationResult } = useAuth();
 
   const formatPhoneNumber = (value) => {
     if (!value) return "+1 ";
@@ -61,13 +49,13 @@ function RegistrationForm() {
 
   const validateForm = () => {
     let newErrors = {};
-    // Check if username is valid
-    if (!username.trim()) {
-      newErrors.username = "Username is required.";
-    } else if (username.length < 4 || username.length > 20) {
-      newErrors.username = "Username must be 4-20 characters long.";
+    if (isRegistration) {
+      if (!username.trim()) {
+        newErrors.username = "Username is required.";
+      } else if (username.length < 4 || username.length > 20) {
+        newErrors.username = "Username must be 4-20 characters long.";
+      }
     }
-    // Check if phone number is valid
     if (phoneNumber.length < 1) {
       // "+1 (XXX) XXX-XXXX" 18 characters
       newErrors.phoneNumber = "Complete phone number is required.";
@@ -75,8 +63,6 @@ function RegistrationForm() {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-
-  const { setConfirmationResult } = useAuth();
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -89,7 +75,9 @@ function RegistrationForm() {
         verifier
       );
       setConfirmationResult(confirmationResult);
-      navigate("/verify");
+      navigate("/verify", {
+        state: { phoneNumber, isNewUser: isRegistration },
+      });
     } catch (error) {
       console.error("Failed to send verification code:", error);
       setErrors((prevErrors) => ({
@@ -101,14 +89,18 @@ function RegistrationForm() {
 
   return (
     <form className={styles.form} onSubmit={handleSubmit}>
-      <input
-        className={styles.inputField}
-        type="text"
-        value={username}
-        onChange={(e) => setUsername(e.target.value)}
-        placeholder="Username"
-      />
-      {errors.username && <div className={styles.error}>{errors.username}</div>}
+      {isRegistration && (
+        <input
+          className={styles.inputField}
+          type="text"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          placeholder="Username"
+        />
+      )}
+      {isRegistration && errors.username && (
+        <div className={styles.error}>{errors.username}</div>
+      )}
 
       <input
         className={styles.inputField}
@@ -125,7 +117,11 @@ function RegistrationForm() {
         <div className={styles.error}>{errors.phoneNumber}</div>
       )}
 
-      <LargeButton id="sign-in-button" text="Register" type="submit" />
+      <LargeButton
+        id="sign-in-button"
+        text={isRegistration ? "Register" : "Log In"}
+        type="submit"
+      />
     </form>
   );
 }
