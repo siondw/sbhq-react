@@ -1,53 +1,70 @@
-import React, { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import Header from "../../components/Header/Header";
 import MainText from "../../components/MainText/MainText";
 import PinInput from "../../components/PinInput/PinInput";
 import styles from "./VerificationScreen.module.css";
 import { useAuth } from "../../contexts/AuthContext";
-
-import { getAuth } from "firebase/auth";
-
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { getDatabase, ref, set } from "firebase/database";
 import * as UserService from "../../services/UserServices";
-import { useUser, UserProvider } from "../../contexts/UserContext";
 
 function VerificationScreen() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { phoneNumber, isNewUser, username } = location.state; // Destructure state
   const { confirmationResult } = useAuth();
   const [error, setError] = useState("");
+  const [isUserAuthenticated, setIsUserAuthenticated] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+
+  useEffect(() => {
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        console.log("User is authenticated:", user);
+        setIsUserAuthenticated(true);
+        setCurrentUser(user);
+      } else {
+        console.log("User is not authenticated");
+        setIsUserAuthenticated(false);
+        setCurrentUser(null);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const onSubmitVerificationCode = async (pin) => {
     if (confirmationResult) {
       try {
         const result = await confirmationResult.confirm(pin);
-        console.log("User verified with UID:", result.user.uid);
+        const user = result.user;
+        console.log("User verified with UID:", user.uid);
 
-        // Check if user exists in the database
-        const userExists = await UserService.checkUserExists(result.user.uid);
-        if (!userExists) {
-          // If user does not exist, add them to the database
-          await UserService.addUserToDB(
-            result.user.uid,
-            result.user.displayName,
-            result.user.phoneNumber
-          );
-          console.log("New user added to database.");
+        // Check and log the authentication state and currentUser
+        console.log("isUserAuthenticated:", isUserAuthenticated);
+        console.log("currentUser:", currentUser);
+
+        if (isUserAuthenticated && currentUser) {
+          const userExists = await UserService.checkUserExists(user.uid);
+          console.log("User exists:", userExists);
+
+          if (!userExists) {
+            await UserService.addUserToDB(user.uid, username, user.phoneNumber);
+            console.log("New user added to database.");
+          } else {
+            console.log("User already exists, retrieving details.");
+            const userDetails = await UserService.getUserDetails(user.uid);
+            console.log("Retrieved user details:", userDetails);
+          }
+          navigate("/pregame");
         } else {
-          console.log("User already exists, retrieving details.");
-          // Optionally fetch user details
-          const userDetails = await UserService.getUserDetails(result.user.uid);
-          console.log("Retrieved user details:", userDetails);
+          setError("User authentication failed. Please try again.");
         }
-
-        navigate("/pregame");
       } catch (error) {
-        console.error(
-          "Failed during user verification or database operations:",
-          error
-        );
-        setError(
-          "Failed to verify code or handle user data. Please try again."
-        );
+        console.error("Failed during user verification or database operations:", error);
+        setError("Failed to verify code or handle user data. Please try again.");
       }
     }
   };

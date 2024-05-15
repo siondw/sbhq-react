@@ -79,7 +79,7 @@ function RegistrationForm({ isRegistration = true }) {
       );
       setConfirmationResult(confirmationResult);
       navigate("/verify", {
-        state: { phoneNumber, isNewUser: isRegistration },
+        state: { phoneNumber, isNewUser: isRegistration, username },
       });
     } catch (error) {
       console.error("Failed to send verification code:", error);
