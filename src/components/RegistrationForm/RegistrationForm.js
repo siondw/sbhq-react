@@ -4,7 +4,7 @@ import LargeButton from "../CustomButton/LargeButton";
 import styles from "./RegistrationForm.module.css";
 
 import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
-import { useAuth } from "./AuthContext";
+import { useAuth } from "../../contexts/AuthContext";
 import { auth } from "../../firebase";
 
 function RegistrationForm({ isRegistration = true }) {
@@ -22,6 +22,7 @@ function RegistrationForm({ isRegistration = true }) {
 
   const navigate = useNavigate();
 
+  // This is important because it allows us to use the confirmation result globally
   const { setConfirmationResult } = useAuth();
 
   const formatPhoneNumber = (value) => {
@@ -54,6 +55,8 @@ function RegistrationForm({ isRegistration = true }) {
         newErrors.username = "Username is required.";
       } else if (username.length < 4 || username.length > 20) {
         newErrors.username = "Username must be 4-20 characters long.";
+      } else {
+        setUsername(username.toLowerCase()); // Set username to lowercase
       }
     }
     if (phoneNumber.length < 1) {

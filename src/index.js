@@ -17,7 +17,7 @@ import CorrectScreen from "./screens/Correct/CorrectScreen";
 import EliminatedScreen from "./screens/Eliminated/EliminatedScreen";
 import VerificationScreen from "./screens/VerificationScreen/VerificationScreen";
 
-import { AuthProvider } from "./components/RegistrationForm/AuthContext"; // Adjust the path as necessary
+import { AuthProvider } from "./contexts/AuthContext"; // Adjust the path as necessary
 
 import reportWebVitals from "./reportWebVitals";
 const root = ReactDOM.createRoot(document.getElementById("root"));
@@ -37,7 +37,7 @@ root.render(
           <Route path="/eliminated" element={<EliminatedScreen />} />
           <Route path="/verify" element={<VerificationScreen />} />
           {/* Redirect to /login as the default route */}
-          <Route path="/" element={<Navigate replace to="/pregame" />} />
+          <Route path="/" element={<Navigate replace to="/register" />} />
         </Routes>
       </AuthProvider>
     </Router>

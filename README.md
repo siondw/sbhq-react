@@ -68,3 +68,99 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 ### `npm run build` fails to minify
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+
+```
+sbhq
+├─ .gitignore
+├─ package-lock.json
+├─ package.json
+├─ public
+│  ├─ favicon.ico
+│  ├─ index.html
+│  ├─ logo192.png
+│  ├─ logo512.png
+│  ├─ manifest.json
+│  └─ robots.txt
+├─ README.md
+└─ src
+   ├─ assets
+   │  ├─ ball.gif
+   │  ├─ catch_nobg.gif
+   │  ├─ check.svg
+   │  ├─ DollarSignIcon.svg
+   │  ├─ gear.svg
+   │  ├─ hidepass.svg
+   │  ├─ leaderboard.svg
+   │  ├─ person.svg
+   │  ├─ triangle.svg
+   │  ├─ trophy.png
+   │  ├─ trophy.svg
+   │  └─ x.svg
+   ├─ components
+   │  ├─ AnswerOption
+   │  │  ├─ AnswerOption.js
+   │  │  └─ AnswerOption.module.css
+   │  ├─ AnswersContainer
+   │  │  ├─ AnswersContainer.js
+   │  │  └─ AnswersContainer.module.css
+   │  ├─ CustomButton
+   │  │  ├─ LargeButton.js
+   │  │  └─ LargeButton.module.css
+   │  ├─ GameStatsSummary
+   │  │  ├─ GameStatsSummary.js
+   │  │  └─ GameStatsSummary.module.css
+   │  ├─ Header
+   │  │  ├─ Header.js
+   │  │  └─ Header.module.css
+   │  ├─ LoginForm
+   │  │  └─ LoginForm.js
+   │  ├─ MainText
+   │  │  ├─ MainText.js
+   │  │  └─ MainText.module.css
+   │  ├─ PinInput
+   │  │  ├─ PinInput.js
+   │  │  └─ PinInput.module.css
+   │  ├─ RegistrationForm
+   │  │  ├─ RegistrationForm.js
+   │  │  └─ RegistrationForm.module.css
+   │  ├─ SelectionIndicator
+   │  │  ├─ SelectionIndicator.js
+   │  │  └─ SelectionIndicator.module.css
+   │  └─ SVG.js
+   ├─ contexts
+   │  ├─ AuthContext.js
+   │  └─ UserContext.js
+   ├─ firebase.js
+   ├─ index.css
+   ├─ index.js
+   ├─ logo.svg
+   ├─ reportWebVitals.js
+   ├─ screens
+   │  ├─ Correct
+   │  │  ├─ CorrectScreen.js
+   │  │  └─ CorrectScreen.module.css
+   │  ├─ Eliminated
+   │  │  ├─ EliminatedScreen.js
+   │  │  └─ EliminatedScreen.module.css
+   │  ├─ Login
+   │  │  └─ LoginScreen.js
+   │  ├─ Pregame
+   │  │  ├─ PregameScreen.js
+   │  │  └─ PregameScreen.module.css
+   │  ├─ Question
+   │  │  ├─ QuestionScreen.js
+   │  │  └─ QuestionScreen.module.css
+   │  ├─ Registration
+   │  │  ├─ RegistrationScreen.js
+   │  │  └─ RegistrationScreen.module.css
+   │  ├─ Submitted
+   │  │  ├─ SubmittedScreen.js
+   │  │  └─ SubmittedScreen.module.css
+   │  └─ VerificationScreen
+   │     ├─ VerificationScreen.js
+   │     └─ VerificationScreen.module.css
+   ├─ services
+   │  └─ UserServices.js
+   └─ setupTests.js
+
+```
