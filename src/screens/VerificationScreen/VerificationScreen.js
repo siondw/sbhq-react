@@ -7,6 +7,7 @@ import styles from "./VerificationScreen.module.css";
 import { useAuth } from "../../contexts/AuthContext";
 import { getAuth, onAuthStateChanged, updateProfile } from "firebase/auth";
 import * as UserService from "../../services/UserServices";
+import { checkOpenLobbies } from "../../services/LobbyService"; // Import the service function
 
 function VerificationScreen() {
   const navigate = useNavigate();
@@ -63,10 +64,36 @@ function VerificationScreen() {
           const userDetails = await UserService.getUserDetails(user.uid);
           console.log("Retrieved user details:", userDetails);
         }
-        navigate("/pregame");
+
+        // Check for open lobbies
+        const openLobbyContest = await checkOpenLobbies();
+        if (openLobbyContest) {
+          const isUserRegistered =
+            openLobbyContest.participants &&
+            openLobbyContest.participants.hasOwnProperty(user.uid);
+          if (isUserRegistered) {
+            console.log("Navigating to lobby with contest:", openLobbyContest); // Debugging statement
+            navigate("/lobby", { state: { contest: openLobbyContest } });
+          } else {
+            console.log(
+              "User is not registered for any open lobbies. Redirecting to Join Contests screen."
+            );
+            navigate("/join-contests"); // Navigate to join contests screen if user is not registered for the open lobby
+          }
+        } else {
+          console.log(
+            "No open lobbies found. Redirecting to Join Contests screen."
+          );
+          navigate("/join-contests"); // Navigate to join contests screen if no open lobbies
+        }
       } catch (error) {
-        console.error("Failed during user verification or database operations:", error);
-        setError("Failed to verify code or handle user data. Please try again.");
+        console.error(
+          "Failed during user verification or database operations:",
+          error
+        );
+        setError(
+          "Failed to verify code or handle user data. Please try again."
+        );
       }
     }
   };

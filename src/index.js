@@ -16,6 +16,8 @@ import SubmittedScreen from "./screens/Submitted/SubmittedScreen";
 import CorrectScreen from "./screens/Correct/CorrectScreen";
 import EliminatedScreen from "./screens/Eliminated/EliminatedScreen";
 import VerificationScreen from "./screens/VerificationScreen/VerificationScreen";
+import LobbyScreen from "./screens/Lobby/LobbyScreen";
+import JoinContestsScreen from "./screens/JoinContests/JoinContestsScreen";
 
 import { AuthProvider } from "./contexts/AuthContext"; // Adjust the path as necessary
 
@@ -36,6 +38,8 @@ root.render(
           <Route path="/correct" element={<CorrectScreen />} />
           <Route path="/eliminated" element={<EliminatedScreen />} />
           <Route path="/verify" element={<VerificationScreen />} />
+          <Route path="/lobby" element={<LobbyScreen />} />
+          <Route path="/join-contests" element={<JoinContestsScreen />} />
           {/* Redirect to /login as the default route */}
           <Route path="/" element={<Navigate replace to="/register" />} />
         </Routes>

@@ -1,0 +1,26 @@
+.joinContestsScreen {
+    height: 100vh; 
+    justify-content: center;
+    align-items: center;
+}
+
+.pregameHeader {
+    width: 100%;
+}
+
+.screenContent {
+    display: flex;
+    padding-top: 64px;
+    flex: 1;
+    flex-direction: column;
+    gap: 32px;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .contestList {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+  }

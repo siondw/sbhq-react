@@ -1,0 +1,25 @@
+.lobbyScreen {
+    height: 100vh; 
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin-top: 64px;
+}
+
+.timer {
+    font-family: 'Poppins', sans-serif;
+    font-size: 64px;
+    font-weight: 600;
+    background: linear-gradient(167deg, #54627B, #303845);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    line-height: 50%;
+}
+
