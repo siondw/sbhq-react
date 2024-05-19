@@ -39,6 +39,7 @@ function VerificationScreen() {
     if (confirmationResult) {
       try {
         const result = await confirmationResult.confirm(pin);
+        console.log("Verification result:", result);
         const user = result.user;
         console.log("User verified with UID:", user.uid);
 

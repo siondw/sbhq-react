@@ -72,17 +72,26 @@ function RegistrationForm({ isRegistration = true }) {
     if (!validateForm()) return;
 
     try {
+      if (!verifier) {
+        throw new Error("RecaptchaVerifier not initialized");
+      }
+
+      console.log("Calling signInWithPhoneNumber...");
       const confirmationResult = await signInWithPhoneNumber(
         auth,
         phoneNumber,
         verifier
       );
+      console.log("SMS sent, confirmationResult:", confirmationResult);
+
       setConfirmationResult(confirmationResult);
+      console.log("Navigating to verify screen...");
       navigate("/verify", {
         state: { phoneNumber, isNewUser: isRegistration, username },
       });
+      console.log("Navigated to verify screen");
     } catch (error) {
-      console.error("Failed to send verification code:", error);
+      console.error("Failed to send verification code:", error.message);
       setErrors((prevErrors) => ({
         ...prevErrors,
         phoneNumber: "Failed to send verification code. " + error.message,

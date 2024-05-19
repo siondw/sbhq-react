@@ -1,8 +1,6 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getDatabase } from 'firebase/database'; // If you still need database 
-
-
+import { getAuth, connectAuthEmulator } from 'firebase/auth';
+import { getDatabase, connectDatabaseEmulator } from 'firebase/database'; // Import connectDatabaseEmulator
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -20,14 +18,21 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 
 // Initialize auth
-export const auth = getAuth(app); 
+const auth = getAuth(app); 
 
 // Initialize database 
-export const database = getDatabase(app); 
+const database = getDatabase(app); 
 
-// In your firebase.js (or where you initialize Firebase) 
+// Connect to emulators if running locally
+if (window.location.hostname === "localhost") {
+  // Point to the RTDB emulator running on localhost.
+  connectDatabaseEmulator(database, "127.0.0.1", 9000);
+  connectAuthEmulator(auth, "http://127.0.0.1:9099");
+}
+
+// Export auth and database
+export { auth, database };
+
+// Log Firebase app and auth type for debugging
 console.log('Firebase app:', app); 
-
 console.log('auth type:', typeof auth); 
-
-
