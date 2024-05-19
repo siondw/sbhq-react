@@ -13,7 +13,7 @@ function QuestionScreen() {
   return (
     <div className={styles.questionScreen}>
       <div className={styles.header}>
-        <Header username={username}/>
+        <Header />
       </div>
       <div className={styles.screenContent}>
         <MainText

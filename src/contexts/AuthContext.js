@@ -20,9 +20,11 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
+        console.log("User signed in:", user); // Add this line
         // User is signed in
         setAuthState((currentState) => ({ ...currentState, user }));
       } else {
+        console.log("User signed out"); // Add this line
         // User is signed out
         setAuthState((currentState) => ({ ...currentState, user: null }));
       }
@@ -39,8 +41,16 @@ export const AuthProvider = ({ children }) => {
     setAuthState((current) => ({ ...current, confirmationResult }));
   };
 
+  /**
+   * Sets the authenticated user in the authentication state.
+   * @param {Object} user - The authenticated user.
+   */
+  const setUser = (user) => {
+    setAuthState((current) => ({ ...current, user }));
+  };
+
   return (
-    <AuthContext.Provider value={{ ...authState, setConfirmationResult }}>
+    <AuthContext.Provider value={{ ...authState, setConfirmationResult, setUser }}>
       {children}
     </AuthContext.Provider>
   );

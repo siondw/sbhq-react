@@ -12,7 +12,7 @@ function CorrectScreen() {
 
   return (
     <div className={styles.correctScreen}>
-      <Header username={"test"} />
+      <Header />
       <div className={styles.content}>
         <div className={styles.textWithIcon}>
           <span className={styles.correctText}>Correct</span>

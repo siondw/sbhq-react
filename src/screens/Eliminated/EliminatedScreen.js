@@ -8,7 +8,7 @@ function EliminatedScreen() {
 
 return (
     <div className={styles.eliminatedScreen}>
-        <Header username={"test"} />
+        <Header />
         <div className={styles.content}>
             <div className={styles.textWithIcon}>
                 <span className={styles.eliminatedText}>Eliminated</span>

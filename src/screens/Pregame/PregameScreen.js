@@ -9,7 +9,7 @@ function PregameScreen() {
 return (
     <div className={styles.pregameScreen}>
         <div className={styles.pregameHeader}>
-            <Header username={"Test Username"}/>
+            <Header />
         </div>
         <div className={styles.screenContent}>
             <MainText

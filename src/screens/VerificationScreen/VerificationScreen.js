@@ -5,15 +5,14 @@ import MainText from "../../components/MainText/MainText";
 import PinInput from "../../components/PinInput/PinInput";
 import styles from "./VerificationScreen.module.css";
 import { useAuth } from "../../contexts/AuthContext";
-import { getAuth, onAuthStateChanged } from "firebase/auth";
-import { getDatabase, ref, set } from "firebase/database";
+import { getAuth, onAuthStateChanged, updateProfile } from "firebase/auth";
 import * as UserService from "../../services/UserServices";
 
 function VerificationScreen() {
   const navigate = useNavigate();
   const location = useLocation();
   const { phoneNumber, isNewUser, username } = location.state; // Destructure state
-  const { confirmationResult } = useAuth();
+  const { confirmationResult, setUser } = useAuth();
   const [error, setError] = useState("");
   const [isUserAuthenticated, setIsUserAuthenticated] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
@@ -43,26 +42,28 @@ function VerificationScreen() {
         const user = result.user;
         console.log("User verified with UID:", user.uid);
 
-        // Check and log the authentication state and currentUser
-        console.log("isUserAuthenticated:", isUserAuthenticated);
-        console.log("currentUser:", currentUser);
+        // Set the authenticated user in AuthContext
+        setUser(user);
 
-        if (isUserAuthenticated && currentUser) {
-          const userExists = await UserService.checkUserExists(user.uid);
-          console.log("User exists:", userExists);
-
-          if (!userExists) {
-            await UserService.addUserToDB(user.uid, username, user.phoneNumber);
-            console.log("New user added to database.");
-          } else {
-            console.log("User already exists, retrieving details.");
-            const userDetails = await UserService.getUserDetails(user.uid);
-            console.log("Retrieved user details:", userDetails);
-          }
-          navigate("/pregame");
-        } else {
-          setError("User authentication failed. Please try again.");
+        // Update the user's profile in Firebase Authentication to include the username as displayName
+        if (user && !user.displayName) {
+          await updateProfile(user, { displayName: username });
+          console.log("Display name set to:", username);
+          setUser({ ...user, displayName: username });
         }
+
+        const userExists = await UserService.checkUserExists(user.uid);
+        console.log("User exists:", userExists);
+
+        if (!userExists) {
+          await UserService.addUserToDB(user.uid, username, user.phoneNumber);
+          console.log("New user added to database.");
+        } else {
+          console.log("User already exists, retrieving details.");
+          const userDetails = await UserService.getUserDetails(user.uid);
+          console.log("Retrieved user details:", userDetails);
+        }
+        navigate("/pregame");
       } catch (error) {
         console.error("Failed during user verification or database operations:", error);
         setError("Failed to verify code or handle user data. Please try again.");
