@@ -3,26 +3,30 @@ import { format } from 'date-fns';
 import styles from './ContestCard.module.css';
 
 function ContestCard({ contest, onJoin, isRegistered }) {
-  // Format the contest time
-  const formattedTime = format(new Date(contest.time), 'MM/dd @ h:mm a');
+  let formattedTime;
+  try {
+    formattedTime = format(new Date(contest.startTime), 'MM/dd @ h:mm a');
+  } catch (error) {
+    console.error('Invalid date format for contest startTime:', contest.startTime, error);
+    formattedTime = 'Invalid date';
+  }
 
   return (
     <div className={styles.contestCard}>
-      <div className={styles.header}>
+      <span className={styles.price}>${contest.price}</span>
+      <div className={styles.contentGroup}>
         <h2 className={styles.title}>{contest.name}</h2>
-        <span className={styles.price}>${contest.price}</span>
+        <p className={styles.time}>{formattedTime}</p>
+        {isRegistered ? (
+          <button className={`${styles.joinButton} ${styles.registeredButton}`} disabled>
+            Registered
+          </button>
+        ) : (
+          <button className={styles.joinButton} onClick={() => onJoin(contest.id)}>
+            Join Contest
+          </button>
+        )}
       </div>
-      <p className={styles.details}>{contest.details}</p>
-      <p className={styles.time}>{formattedTime}</p>
-      {isRegistered ? (
-        <button className={`${styles.joinButton} ${styles.registeredButton}`} disabled>
-          Registered
-        </button>
-      ) : (
-        <button className={styles.joinButton} onClick={() => onJoin(contest.id)}>
-          Join Contest
-        </button>
-      )}
     </div>
   );
 }

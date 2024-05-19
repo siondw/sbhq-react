@@ -17,7 +17,9 @@ function JoinContestsScreen() {
       const db = getDatabase();
       const contestsRef = ref(db, 'contests');
       const snapshot = await get(contestsRef);
-      setContests(snapshot.val() || {});
+      const contestsData = snapshot.val() || {};
+      console.log('Fetched contests:', contestsData); // Log the raw data
+      setContests(contestsData);
     };
 
     fetchContests();
@@ -40,16 +42,20 @@ function JoinContestsScreen() {
         <Header />
       </div>
       <div className={styles.screenContent}>
-        <MainText header="Contests" subheader="" />
+       <h1> Contests </h1>
         <div className={styles.contestList}>
-          {Object.keys(contests).map(contestId => (
-            <ContestCard
-              key={contestId}
-              contest={{ id: contestId, ...contests[contestId] }}
-              onJoin={handleJoinContest}
-              isRegistered={isUserRegistered(contests[contestId])}
-            />
-          ))}
+          {Object.keys(contests).map(contestId => {
+            const contest = { id: contestId, ...contests[contestId] };
+            console.log(`Contest ${contestId} startTime:`, contest.startTime); // Log each contest's startTime
+            return (
+              <ContestCard
+                key={contestId}
+                contest={contest}
+                onJoin={handleJoinContest}
+                isRegistered={isUserRegistered(contests[contestId])}
+              />
+            );
+          })}
         </div>
       </div>
     </div>
