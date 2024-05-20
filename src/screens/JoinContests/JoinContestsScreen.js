@@ -42,7 +42,7 @@ function JoinContestsScreen() {
         <Header />
       </div>
       <div className={styles.screenContent}>
-       <h1> Contests </h1>
+        <h1 className={styles.contestHeader}>Contests</h1>
         <div className={styles.contestList}>
           {Object.keys(contests).map(contestId => {
             const contest = { id: contestId, ...contests[contestId] };
