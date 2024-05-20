@@ -1,14 +1,18 @@
 import React from 'react';
-import Header from "../../components/Header/Header";
-import MainText from "../../components/MainText/MainText";
-import AnswersContainer from "../../components/AnswersContainer/AnswersContainer";
-import styles from "./QuestionScreen.module.css";
+import { useLocation } from 'react-router-dom';
+import Header from '../../components/Header/Header';
+import MainText from '../../components/MainText/MainText';
+import AnswersContainer from '../../components/AnswersContainer/AnswersContainer';
+import styles from './QuestionScreen.module.css';
 
 function QuestionScreen() {
-  var roundNumber = "1";
-  var questionText = "What will be the result of this drive?";  // Mock question text
-  var username = "John Doe";  // Mock username
-  const questionAnswers = ["Field Goal", "Touchdown", "Punt", "Other"];
+  const location = useLocation();
+  const { contest } = location.state; // Get contest details from state
+
+  const roundNumber = contest.currentRound;
+  const currentQuestion = contest.questions.find(question => question.round === roundNumber);
+  const questionText = currentQuestion ? currentQuestion.question : "No question available";  
+  const questionAnswers = currentQuestion ? currentQuestion.options : [];
 
   return (
     <div className={styles.questionScreen}>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { getDatabase, ref, onValue } from "firebase/database";
 import Header from "../../components/Header/Header";
 import MainText from "../../components/MainText/MainText";
@@ -8,10 +8,11 @@ import styles from "./LobbyScreen.module.css";
 
 function LobbyScreen() {
   const location = useLocation();
+  const navigate = useNavigate(); // Initialize useNavigate
   const { contest } = location.state; // Get contest details from state
   const gradientStyle = "linear-gradient(167deg, #54627B, #303845)";
   const [players, setPlayers] = useState([]);
-  const contestStartTime = new Date(contest.startTime).getTime(); // Example start time
+  const contestStartTime = new Date(contest.startTime).getTime(); 
   const [timeRemaining, setTimeRemaining] = useState(
     calculateTimeRemaining(contestStartTime)
   );
@@ -40,12 +41,13 @@ function LobbyScreen() {
       const newTimeRemaining = calculateTimeRemaining(contestStartTime);
       if (newTimeRemaining <= 0) {
         clearInterval(timer);
+        navigate('/question', { state: { contest } }); // Redirect to question screen
       }
       setTimeRemaining(newTimeRemaining);
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [contestStartTime]);
+  }, [contestStartTime, navigate, contest]);
 
   function calculateTimeRemaining(startTime) {
     const now = new Date().getTime();
