@@ -8,46 +8,58 @@ import styles from "./LobbyScreen.module.css";
 
 function LobbyScreen() {
   const location = useLocation();
-  const navigate = useNavigate(); // Initialize useNavigate
-  const { contest } = location.state; // Get contest details from state
+  const navigate = useNavigate();
+  const { contestId } = location.state; // Get contestId from state
   const gradientStyle = "linear-gradient(167deg, #54627B, #303845)";
+  const [contest, setContest] = useState(null);
   const [players, setPlayers] = useState([]);
-  const contestStartTime = new Date(contest.startTime).getTime(); 
-  const [timeRemaining, setTimeRemaining] = useState(
-    calculateTimeRemaining(contestStartTime)
-  );
+  const [timeRemaining, setTimeRemaining] = useState(0);
 
   useEffect(() => {
     const db = getDatabase();
-    const playersRef = ref(db, `contests/${contest.id}/participants`);
+    const contestRef = ref(db, `contests/${contestId}`);
 
-    // Set up a real-time listener for the players list
-    const unsubscribe = onValue(playersRef, (snapshot) => {
-      const playersData = snapshot.val() || {};
-      const activePlayers = Object.values(playersData)
-        .filter((participant) => participant.active)
-        .map((participant) => participant.username);
-      setPlayers(activePlayers);
+    // Fetch contest details
+    onValue(contestRef, (snapshot) => {
+      const contestData = snapshot.val();
+      setContest(contestData);
+
+      // Calculate time remaining
+      if (contestData && contestData.startTime) {
+        const contestStartTime = new Date(contestData.startTime).getTime();
+        setTimeRemaining(calculateTimeRemaining(contestStartTime));
+      }
     });
 
-    // Clean up the listener when the component is unmounted
-    return () => {
-      unsubscribe();
-    };
-  }, [contest.id]);
+    // Fetch participants
+    const participantsRef = ref(db, `contests/${contestId}/participants`);
+    onValue(participantsRef, (snapshot) => {
+      const participantsData = snapshot.val();
+      const activePlayers = participantsData
+        ? Object.values(participantsData)
+            .filter((participant) => participant.active)
+            .map((participant) => participant.username)
+        : [];
+      setPlayers(activePlayers);
+    });
+  }, [contestId]);
 
   useEffect(() => {
     const timer = setInterval(() => {
-      const newTimeRemaining = calculateTimeRemaining(contestStartTime);
-      if (newTimeRemaining <= 0) {
-        clearInterval(timer);
-        navigate('/question', { state: { contest } }); // Redirect to question screen
+      if (contest && contest.startTime) {
+        const newTimeRemaining = calculateTimeRemaining(
+          new Date(contest.startTime).getTime()
+        );
+        if (newTimeRemaining <= 0) {
+          clearInterval(timer);
+          navigate("/question", { state: { contest } }); // Redirect to question screen
+        }
+        setTimeRemaining(newTimeRemaining);
       }
-      setTimeRemaining(newTimeRemaining);
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [contestStartTime, navigate, contest]);
+  }, [contest, navigate]);
 
   function calculateTimeRemaining(startTime) {
     const now = new Date().getTime();
@@ -62,6 +74,10 @@ function LobbyScreen() {
     return `${minutes.toString().padStart(2, "0")}:${seconds
       .toString()
       .padStart(2, "0")}`;
+  }
+
+  if (!contest) {
+    return <div>Loading contest details...</div>;
   }
 
   return (
