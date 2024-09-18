@@ -1,7 +1,7 @@
 // Topbar.js
 import React from 'react';
 import { Menu, Transition } from '@headlessui/react';
-import { BellIcon, CogIcon } from '@heroicons/react/24/outline';
+import { BellIcon, CogIcon } from '@heroicons/react/outline';
 
 const Topbar = () => {
   return (

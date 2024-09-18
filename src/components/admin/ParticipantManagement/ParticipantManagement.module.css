@@ -1,0 +1,66 @@
+.container {
+    padding: 20px;
+    color: #e8eaf6;
+  }
+  
+  .heading {
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 20px;
+  }
+  
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+  }
+  
+  .table th, .table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #424242;
+  }
+  
+  .table th {
+    background-color: #2c2c2e;
+    color: #e8eaf6;
+    font-size: 14px;
+  }
+  
+  .table td {
+    background-color: #1c1c1e;
+    color: #e8eaf6;
+  }
+  
+  .status {
+    padding: 5px 10px;
+    border-radius: 12px;
+    text-transform: capitalize;
+  }
+  
+  .active {
+    background-color: #2ecc71;
+    color: #fff;
+  }
+  
+  .inactive {
+    background-color: #e74c3c;
+    color: #fff;
+  }
+  
+  .toggleButton {
+    background-color: #3498db;
+    color: #fff;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    font-size: 12px;
+    cursor: pointer;
+    margin-right: 10px;
+    transition: background-color 0.3s;
+  }
+  
+  .toggleButton:hover {
+    background-color: #2980b9;
+  }
+  

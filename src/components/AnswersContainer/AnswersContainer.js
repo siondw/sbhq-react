@@ -3,7 +3,7 @@ import AnswerOption from '../AnswerOption/AnswerOption';
 import styles from './AnswersContainer.module.css';
 import CustomButton from '../CustomButton/LargeButton'; 
 
-const AnswersContainer = ({ answers }) => {
+const AnswersContainer = ({ answers, onSubmit }) => { // Accept onSubmit prop from parent
     const [selected, setSelected] = useState(null);
 
     const handleSelect = (index) => {
@@ -11,8 +11,8 @@ const AnswersContainer = ({ answers }) => {
     };
 
     const handleSubmit = () => {
-        if(selected !== null) {
-            alert(`You submitted: ${answers[selected]}`);
+        if (selected !== null) {
+            onSubmit(answers[selected]); // Pass the selected answer to the parent's submit handler
         } else {
             alert('Please select an answer.');
         }
@@ -28,7 +28,11 @@ const AnswersContainer = ({ answers }) => {
                     onSelect={() => handleSelect(index)}
                 />
             ))}
-            <CustomButton className={styles.customSubmit} text="Submit Answer" onClick={handleSubmit} />
+            <CustomButton 
+                className={styles.customSubmit} 
+                text="Submit Answer" 
+                onClick={handleSubmit} 
+            />
         </div>
     );
 };

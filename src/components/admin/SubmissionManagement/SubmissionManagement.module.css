@@ -1,44 +1,99 @@
-/* SubmissionManagement.module.css */
 .container {
-    display: flex;
-    flex-direction: column;
+    padding: 20px;
+    color: #e8eaf6;
   }
   
   .heading {
+    font-size: 24px;
+    font-weight: 600;
     margin-bottom: 20px;
-    color: #ffffff;
   }
   
-  .statsContainer {
+  .questionNavigation {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: #2d2d2d;
-    padding: 20px;
-    border-radius: 5px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     margin-bottom: 20px;
   }
   
-  .statsText {
+  .arrowButton {
+    background: none;
+    border: none;
+    padding: 10px;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+  }
+  
+  .arrowButton:hover {
+    transform: scale(1.1);
+  }
+  
+  .icon {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .blueArrow {
+    color: #3498db; /* Blue color for arrows */
+  }
+  
+  .questionText {
+    flex-grow: 1;
+    text-align: center;
     font-size: 18px;
     font-weight: bold;
-    color: #ffffff;
   }
   
-  .submissionStats {
-    background-color: #2d2d2d;
-    padding: 20px;
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-gap: 20px;
+  }
+  
+  .answer {
+    background-color: #1c1c1e;
+    padding: 15px;
+    border: 1px solid #424242;
     border-radius: 5px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
   }
   
-  .subHeading {
-    margin-bottom: 15px;
-    color: #ffffff;
+  .answerHeader {
+    display: flex;
+    justify-content: space-between;
+    font-weight: 600;
+    margin-bottom: 10px;
   }
   
-  .textSecondary {
-    color: #b3b3b3;
+  .participantList {
+    margin-top: 10px;
+    padding-left: 10px;
+  }
+  
+  .participant {
+    display: block;
+    margin-bottom: 5px;
+  }
+  
+  .pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+  }
+  
+  .pageButton {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background-color 0.3s;
+  }
+  
+  .pageButton:disabled {
+    background-color: #7f8c8d;
+    cursor: not-allowed;
   }
   

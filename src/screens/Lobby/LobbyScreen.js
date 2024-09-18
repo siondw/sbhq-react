@@ -9,30 +9,16 @@ import styles from "./LobbyScreen.module.css";
 function LobbyScreen() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { contestId } = location.state; // Get contestId from state
+  const { contest } = location.state; // Access contest object directly from location state
   const gradientStyle = "linear-gradient(167deg, #54627B, #303845)";
-  const [contest, setContest] = useState(null);
   const [players, setPlayers] = useState([]);
   const [timeRemaining, setTimeRemaining] = useState(0);
 
   useEffect(() => {
     const db = getDatabase();
-    const contestRef = ref(db, `contests/${contestId}`);
 
-    // Fetch contest details
-    onValue(contestRef, (snapshot) => {
-      const contestData = snapshot.val();
-      setContest(contestData);
-
-      // Calculate time remaining
-      if (contestData && contestData.startTime) {
-        const contestStartTime = new Date(contestData.startTime).getTime();
-        setTimeRemaining(calculateTimeRemaining(contestStartTime));
-      }
-    });
-
-    // Fetch participants
-    const participantsRef = ref(db, `contests/${contestId}/participants`);
+    // Fetch participants from the new structure
+    const participantsRef = ref(db, `participants/${contest.id}`);
     onValue(participantsRef, (snapshot) => {
       const participantsData = snapshot.val();
       const activePlayers = participantsData
@@ -42,17 +28,23 @@ function LobbyScreen() {
         : [];
       setPlayers(activePlayers);
     });
-  }, [contestId]);
+
+    // Calculate time remaining for the contest
+    if (contest && contest.date) {
+      const contestStartTime = new Date(contest.date).getTime();
+      setTimeRemaining(calculateTimeRemaining(contestStartTime));
+    }
+  }, [contest]);
 
   useEffect(() => {
     const timer = setInterval(() => {
-      if (contest && contest.startTime) {
+      if (contest && contest.date) {
         const newTimeRemaining = calculateTimeRemaining(
-          new Date(contest.startTime).getTime()
+          new Date(contest.date).getTime()
         );
         if (newTimeRemaining <= 0) {
           clearInterval(timer);
-          navigate("/question", { state: { contest } }); // Redirect to question screen
+          navigate("/question", { state: { contest } });
         }
         setTimeRemaining(newTimeRemaining);
       }

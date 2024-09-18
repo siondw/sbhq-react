@@ -1,0 +1,93 @@
+.container {
+    padding: 20px;
+    color: #E8EAF6;
+  }
+  
+  .heading {
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 20px;
+  }
+  
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+  }
+  
+  .table th, .table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #424242;
+  }
+  
+  .table th {
+    background-color: #2C2C2E;
+    color: #E8EAF6;
+    font-size: 14px;
+  }
+  
+  .table td {
+    background-color: #1C1C1E;
+    color: #E8EAF6;
+  }
+  
+  .newQuestionContainer {
+    margin-top: 30px;
+    padding: 20px;
+    background-color: #2C2C2E;
+    border-radius: 5px;
+  }
+  
+  .input {
+    width: 100%;
+    padding: 10px;
+    background-color: #1C1C1E;
+    border: 1px solid #424242;
+    color: #E8EAF6;
+    margin-bottom: 10px;
+  }
+  
+  .options {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  
+  .addButton {
+    background-color: #3498db;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .addButton:hover {
+    background-color: #2980b9;
+  }
+  
+  .actionButton {
+    background-color: #2ecc71;
+    color: #fff;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    font-size: 12px;
+    cursor: pointer;
+    margin-right: 10px;
+    transition: background-color 0.3s;
+  }
+  
+  .actionButton:hover {
+    background-color: #27ae60;
+  }
+  
+  .editContainer {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  

@@ -5,7 +5,7 @@ import styles from './ContestCard.module.css';
 function ContestCard({ contest, onJoin, isRegistered }) {
   let formattedTime;
   try {
-    formattedTime = format(new Date(contest.startTime), 'MM/dd @ h:mm a');
+    formattedTime = format(new Date(contest.date), 'MM/dd @ h:mm a');
   } catch (error) {
     console.error('Invalid date format for contest startTime:', contest.startTime, error);
     formattedTime = 'Invalid date';

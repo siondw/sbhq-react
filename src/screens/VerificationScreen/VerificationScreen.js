@@ -78,13 +78,13 @@ function VerificationScreen() {
             console.log(
               "User is not registered for any open lobbies. Redirecting to Join Contests screen."
             );
-            navigate("/join-contests"); // Navigate to join contests screen if user is not registered for the open lobby
+            navigate("/join-contests");
           }
         } else {
           console.log(
             "No open lobbies found. Redirecting to Join Contests screen."
           );
-          navigate("/join-contests"); // Navigate to join contests screen if no open lobbies
+          navigate("/join-contests");
         }
       } catch (error) {
         console.error(

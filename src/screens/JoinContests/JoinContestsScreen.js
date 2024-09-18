@@ -30,6 +30,18 @@ function JoinContestsScreen() {
     const db = getDatabase();
     let intervalId;
 
+    /**
+     * Polls for open lobbies and navigates the user to the lobby if they are registered.
+     *
+     * This function listens for changes in the "contests" reference in the database.
+     * If any contest has an open lobby and the user is registered in that contest,
+     * it navigates the user to the lobby.
+     *
+     * @async
+     * @function pollForOpenLobbies
+     * @returns {Promise<void>} A promise that resolves when the function completes.
+     * @throws Will throw an error if it fails to check for open lobbies.
+     */
     const pollForOpenLobbies = async () => {
       try {
         const contestsRef = ref(db, "contests");
@@ -67,6 +79,12 @@ function JoinContestsScreen() {
     return () => clearInterval(intervalId);
   }, [user, navigate]);
 
+  /**
+   * Handles the process of joining a contest.
+   *
+   * @param {string} contestId - The unique identifier of the contest to join.
+   * @returns {Promise<void>} - A promise that resolves when the contest is successfully joined.
+   */
   const handleJoinContest = async (contestId) => {
     const db = getDatabase();
     const contestRef = ref(
@@ -77,6 +95,14 @@ function JoinContestsScreen() {
     navigate("/lobby", { state: { contestId } });
   };
 
+  /**
+   * Checks if the user is registered in the given contest.
+   *
+   * @param {Object} contest - The contest object.
+   * @param {Object} contest.participants - The participants of the contest.
+   * @param {string} user.uid - The unique identifier of the user.
+   * @returns {boolean} - Returns true if the user is registered in the contest, otherwise false.
+   */
   const isUserRegistered = (contest) => {
     return (
       contest.participants && contest.participants.hasOwnProperty(user.uid)
@@ -93,7 +119,7 @@ function JoinContestsScreen() {
         <div className={styles.contestList}>
           {Object.keys(contests).map((contestId) => {
             const contest = { id: contestId, ...contests[contestId] };
-            console.log(`Contest ${contestId} startTime:`, contest.startTime); // Log each contest's startTime
+            console.log(`Contest ${contestId} startTime:`, contest.date); // Log each contest's startTime
             return (
               <ContestCard
                 key={contestId}

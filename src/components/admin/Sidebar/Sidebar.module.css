@@ -1,0 +1,55 @@
+/* AdminSidebar.module.css */
+.sidebar {
+    width: 232px;
+    height: 100vh;
+    background: #1C1C1E;
+    padding: 24px 16px 0px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    border-right: 1px solid #424242;
+  }
+  
+  .menu {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  
+  .menu-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    width: 200px; /* Fixed width for the menu item */
+    height: 48px; /* Fixed height for the menu item */
+    padding: 0 16px;
+    color: #E8EAF6;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase; /* All caps */
+    cursor: pointer;
+    text-decoration: none;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    border-radius: 8px; /* Slight rounding */
+  }
+  
+  .menu-item.active {
+    background-color: #424242; /* Highlight active link */
+  }
+  
+  .menu-item:hover {
+    background-color: #2C2C2E;
+  }
+  
+  .icon {
+    width: 20px; /* Adjusted icon size (smaller than default) */
+    height: 20px;
+    color: #E04040; /* Icon color */
+  }
+  
+  .label {
+    color: #E8EAF6;
+    flex-grow: 1; /* Allow label to take remaining space */
+  }
+  

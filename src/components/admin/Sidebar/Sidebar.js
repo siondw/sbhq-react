@@ -1,31 +1,29 @@
-// Sidebar.js
 import React from 'react';
-import { HomeIcon, QuestionMarkCircleIcon, UserGroupIcon } from '@heroicons/react/24/outline';
+import { NavLink } from 'react-router-dom';
+import { HomeIcon, CogIcon, UsersIcon, QuestionMarkCircleIcon, ChartBarIcon, CheckCircleIcon } from '@heroicons/react/outline';
+import styles from './Sidebar.module.css'; // Import scoped styles
 
-const Sidebar = ({ setCurrentScreen, currentScreen }) => {
+const Sidebar = () => {
   const menuItems = [
-    { name: 'Overview', screen: 'overview', Icon: HomeIcon },
-    { name: 'Questions', screen: 'questions', Icon: QuestionMarkCircleIcon },
-    { name: 'Participants', screen: 'participants', Icon: UserGroupIcon },
+    { name: 'Overview', path: '/admin/overview', icon: HomeIcon },
+    { name: 'Contests', path: '/admin/contests', icon: ChartBarIcon },
+    { name: 'Questions', path: '/admin/questions', icon: QuestionMarkCircleIcon },
+    { name: 'Participants', path: '/admin/participants', icon: UsersIcon },
+    { name: 'Submissions', path: '/admin/submissions', icon: CheckCircleIcon },
   ];
 
   return (
-    <div className="w-64 bg-gray-800">
-      <div className="flex items-center justify-center h-20 shadow-md">
-        <h1 className="text-3xl font-bold text-blue-500">Quiz Admin</h1>
-      </div>
-      <nav className="mt-5">
-        {menuItems.map(({ name, screen, Icon }) => (
-          <button
-            key={name}
-            onClick={() => setCurrentScreen(screen)}
-            className={`flex items-center mt-4 py-2 px-6 w-full text-left ${
-              currentScreen === screen ? 'bg-gray-700 bg-opacity-25 text-gray-100' : 'text-gray-500 hover:bg-gray-700 hover:bg-opacity-25 hover:text-gray-100'
-            }`}
+    <div className={styles.sidebar}>
+      <nav className={styles.menu}>
+        {menuItems.map((item, index) => (
+          <NavLink
+            key={index}
+            to={item.path}
+            className={({ isActive }) => `${styles['menu-item']} ${isActive ? styles.active : ''}`}
           >
-            <Icon className="h-5 w-5" />
-            <span className="mx-3">{name}</span>
-          </button>
+            <item.icon className={styles.icon} />
+            <span className={styles.label}>{item.name}</span>
+          </NavLink>
         ))}
       </nav>
     </div>

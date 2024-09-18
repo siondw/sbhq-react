@@ -1,37 +1,139 @@
-// QuestionManagement.js
 import React, { useState } from 'react';
+import styles from './QuestionManagement.module.css';
 
 const QuestionManagement = () => {
-  const [questions] = useState([
-    { id: 1, text: "What will be the result of the first drive?", options: ["Touchdown", "Field Goal", "Punt", "Turnover"] },
-    { id: 2, text: "Which team will score first?", options: ["Home Team", "Away Team"] },
+  const [questions, setQuestions] = useState([
+    {
+      id: 1,
+      text: 'Who will score the first touchdown?',
+      options: ['Player A', 'Player B', 'Player C', 'Player D'],
+      correctOption: null, // No correct answer yet
+    },
+    {
+      id: 2,
+      text: 'How many field goals will be scored?',
+      options: ['0', '1', '2', '3+'],
+      correctOption: null, // No correct answer yet
+    },
   ]);
 
+  const [newQuestion, setNewQuestion] = useState({
+    text: '',
+    options: ['', '', '', ''],
+  });
+
+  const [editingQuestionId, setEditingQuestionId] = useState(null);
+  const [correctAnswer, setCorrectAnswer] = useState('');
+
+  const handleAddQuestion = () => {
+    const newId = questions.length + 1;
+    setQuestions([...questions, { id: newId, ...newQuestion, correctOption: null }]);
+    setNewQuestion({ text: '', options: ['', '', '', ''] });
+  };
+
+  const handleEditQuestion = (id) => {
+    setEditingQuestionId(id);
+  };
+
+  const handleSetCorrectAnswer = (id, answer) => {
+    const updatedQuestions = questions.map((question) =>
+      question.id === id ? { ...question, correctOption: answer } : question
+    );
+    setQuestions(updatedQuestions);
+    setEditingQuestionId(null); // Close the editing mode
+  };
+
+  const handleInputChange = (e, index) => {
+    const options = [...newQuestion.options];
+    options[index] = e.target.value;
+    setNewQuestion({ ...newQuestion, options });
+  };
+
   return (
-    <div>
-      <h2 className="text-2xl font-semibold text-white mb-4">Question Management</h2>
-      <button className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
-        Add New Question
-      </button>
-      <div className="mt-6">
-        {questions.map((question) => (
-          <div key={question.id} className="bg-gray-800 p-4 rounded-md shadow-sm mb-4">
-            <h3 className="text-lg font-semibold text-white mb-2">{question.text}</h3>
-            <div className="grid grid-cols-2 gap-2">
-              {question.options.map((option, index) => (
-                <div key={index} className="bg-gray-700 p-2 rounded">{option}</div>
-              ))}
-            </div>
-            <div className="mt-4">
-              <button className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-1 px-3 rounded mr-2">
-                Edit
-              </button>
-              <button className="bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded">
-                Delete
-              </button>
-            </div>
-          </div>
-        ))}
+    <div className={styles.container}>
+      <h2 className={styles.heading}>Question Management</h2>
+
+      {/* Table to display current questions */}
+      <table className={styles.table}>
+        <thead>
+          <tr>
+            <th>Question</th>
+            <th>Options</th>
+            <th>Correct Answer</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {questions.map((question) => (
+            <tr key={question.id}>
+              <td>{question.text}</td>
+              <td>{question.options.join(', ')}</td>
+              <td>
+                {question.correctOption ? question.correctOption : 'Not set'}
+              </td>
+              <td>
+                {editingQuestionId === question.id ? (
+                  <div className={styles.editContainer}>
+                    <select
+                      value={correctAnswer}
+                      onChange={(e) => setCorrectAnswer(e.target.value)}
+                      className={styles.input}
+                    >
+                      <option value="">Select Correct Answer</option>
+                      {question.options.map((option, index) => (
+                        <option key={index} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      className={styles.actionButton}
+                      onClick={() => handleSetCorrectAnswer(question.id, correctAnswer)}
+                    >
+                      Save
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <button
+                      className={styles.actionButton}
+                      onClick={() => handleEditQuestion(question.id)}
+                    >
+                      Set Correct Answer
+                    </button>
+                  </>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      {/* Form to add new question */}
+      <div className={styles.newQuestionContainer}>
+        <h3>Add New Question</h3>
+        <input
+          type="text"
+          className={styles.input}
+          placeholder="Question Text"
+          value={newQuestion.text}
+          onChange={(e) => setNewQuestion({ ...newQuestion, text: e.target.value })}
+        />
+        <div className={styles.options}>
+          {newQuestion.options.map((option, index) => (
+            <input
+              key={index}
+              type="text"
+              className={styles.input}
+              placeholder={`Option ${index + 1}`}
+              value={option}
+              onChange={(e) => handleInputChange(e, index)}
+            />
+          ))}
+        </div>
+        <button className={styles.addButton} onClick={handleAddQuestion}>
+          Add Question
+        </button>
       </div>
     </div>
   );
