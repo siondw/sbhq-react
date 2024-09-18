@@ -1,0 +1,44 @@
+/* SubmissionManagement.module.css */
+.container {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .heading {
+    margin-bottom: 20px;
+    color: #ffffff;
+  }
+  
+  .statsContainer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #2d2d2d;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    margin-bottom: 20px;
+  }
+  
+  .statsText {
+    font-size: 18px;
+    font-weight: bold;
+    color: #ffffff;
+  }
+  
+  .submissionStats {
+    background-color: #2d2d2d;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  }
+  
+  .subHeading {
+    margin-bottom: 15px;
+    color: #ffffff;
+  }
+  
+  .textSecondary {
+    color: #b3b3b3;
+  }
+  
