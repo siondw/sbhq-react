@@ -56,7 +56,7 @@ function JoinContestsScreen() {
                   contest.participants.hasOwnProperty(user.uid);
                 if (isUserRegistered) {
                   console.log("Navigating to lobby with contest:", contest); // Debugging statement
-                  navigate("/lobby", { state: { contestId } });
+                  navigate("/lobby", { state: { contest } });
                   break;
                 }
               }
@@ -83,16 +83,34 @@ function JoinContestsScreen() {
    * Handles the process of joining a contest.
    *
    * @param {string} contestId - The unique identifier of the contest to join.
-   * @returns {Promise<void>} - A promise that resolves when the contest is successfully joined.
+   * @returns {Promise<void>} - A promise that resolves when the contest is successfully joined. Also updates the state of the component
    */
   const handleJoinContest = async (contestId) => {
-    const db = getDatabase();
-    const contestRef = ref(
-      db,
-      `contests/${contestId}/participants/${user.uid}`
-    );
-    await update(contestRef, { username: user.displayName, active: true });
-    navigate("/lobby", { state: { contestId } });
+    try {
+      const db = getDatabase();
+      const contestRef = ref(
+        db,
+        `contests/${contestId}/participants/${user.uid}`
+      );
+      await update(contestRef, { username: user.displayName, active: true });
+
+      // Trigger a re-render of the ContestCard
+      setContests(prevContests => ({ 
+        ...prevContests, 
+        [contestId]: {
+          ...prevContests[contestId],
+          participants: {
+            ...prevContests[contestId].participants,
+            [user.uid]: { username: user.displayName, active: true }
+          }
+        }
+      }));
+
+    } catch (error) {
+      console.error("Failed to join contest:", error);
+      // Set a specific error message for joining contest 
+      setError("Failed to join contest. Please try again later.");
+    }
   };
 
   /**

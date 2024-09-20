@@ -1,46 +1,97 @@
+/* OverviewContent.module.css */
+
 .container {
-    padding: 20px;
-    color: #E8EAF6;
-    background-color: #1C1C1E;
-    height: 100%; /* Ensure the container takes full height */
-  }
-  
-  .heading {
-    font-size: 24px;
-    font-weight: 600;
-    margin-bottom: 20px;
-  }
-  
-  .cards {
-    display: flex;
-    justify-content: space-around;
-    gap: 20px; /* Add some spacing between the cards */
-    margin-top: 20px;
-  }
-  
-  .card {
-    background-color: #2C2C2E; /* Dark background for the cards */
-    padding: 30px;
-    border-radius: 10px;
-    width: 200px; /* Fixed width for the cards */
-    text-align: center;
-    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); /* Add a soft shadow for depth */
-    transition: transform 0.2s ease; /* Smooth hover effect */
-  }
-  
-  .card:hover {
-    transform: translateY(-5px); /* Lift the card slightly on hover */
-  }
-  
-  .card h3 {
-    font-size: 18px;
-    margin-bottom: 10px;
-    color: #E8EAF6; /* Light text for card titles */
-  }
-  
-  .card p {
-    font-size: 24px;
-    font-weight: bold;
-    color: #FFFFFF; /* Bright text for the stats */
-  }
-  
+  padding: 20px;
+  color: #E8EAF6;
+  background-color: #1C1C1E;
+  border-radius: 8px;
+}
+
+.heading {
+  text-align: center;
+  margin-bottom: 30px;
+  font-size: 2em;
+  color: #E8EAF6; 
+}
+
+.cards {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+/* Base card styling */
+.card {
+  padding: 20px;
+  width: 250px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5); 
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: transform 0.2s;
+  color: #E8EAF6; /* White text color */
+}
+
+.card:hover {
+  transform: translateY(-5px);
+}
+
+.iconContainer {
+  margin-bottom: 15px;
+  border-radius: 50%;
+  padding: 10px;
+}
+
+.icon {
+  width: 40px;
+  height: 40px;
+}
+
+.cardTitle {
+  font-size: 1.2em;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.cardValue {
+  font-size: 1.5em;
+  font-weight: bold;
+  text-align: center;
+}
+
+/* Styles for different cards */
+.card:nth-child(1) { /* First Card - Keep the blue */
+  background-color: #2C2C2E; 
+  border-left: 5px solid #2980b9; 
+  .icon { color: #2980b9; }
+  .cardValue { color: #2980b9; }
+}
+
+.card:nth-child(2) { /* Second Card - Warm Orange */
+  background-color: #2C2C2E; 
+  border-left: 5px solid #e67e22; 
+  .icon { color: #e67e22; }
+  .cardValue { color: #e67e22; }
+}
+
+.card:nth-child(3) { /* Third Card - Cool Teal */
+  background-color: #2C2C2E; 
+  border-left: 5px solid #16a085;
+  .icon { color: #16a085; }
+  .cardValue { color: #16a085; }
+}
+
+
+.loading,
+.error {
+  text-align: center;
+  font-size: 1.2em;
+  margin-top: 50px;
+  color: #E8EAF6; 
+}
+
+.error {
+  color: #FF5733;
+}

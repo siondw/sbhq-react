@@ -1,99 +1,140 @@
+/* SubmissionManagement.module.css */
+
 .container {
-    padding: 20px;
-    color: #e8eaf6;
-  }
-  
-  .heading {
-    font-size: 24px;
-    font-weight: 600;
-    margin-bottom: 20px;
-  }
-  
-  .questionNavigation {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-  }
-  
-  .arrowButton {
-    background: none;
-    border: none;
-    padding: 10px;
-    cursor: pointer;
-    transition: transform 0.3s ease;
-  }
-  
-  .arrowButton:hover {
-    transform: scale(1.1);
-  }
-  
-  .icon {
-    width: 24px;
-    height: 24px;
-  }
-  
-  .blueArrow {
-    color: #3498db; /* Blue color for arrows */
-  }
-  
-  .questionText {
-    flex-grow: 1;
-    text-align: center;
-    font-size: 18px;
-    font-weight: bold;
-  }
-  
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    grid-gap: 20px;
-  }
-  
-  .answer {
-    background-color: #1c1c1e;
-    padding: 15px;
-    border: 1px solid #424242;
-    border-radius: 5px;
-  }
-  
-  .answerHeader {
-    display: flex;
-    justify-content: space-between;
-    font-weight: 600;
-    margin-bottom: 10px;
-  }
-  
-  .participantList {
-    margin-top: 10px;
-    padding-left: 10px;
-  }
-  
-  .participant {
-    display: block;
-    margin-bottom: 5px;
-  }
-  
-  .pagination {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 10px;
-  }
-  
-  .pageButton {
-    background-color: #3498db;
-    color: white;
-    border: none;
-    padding: 5px 10px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 12px;
-    transition: background-color 0.3s;
-  }
-  
-  .pageButton:disabled {
-    background-color: #7f8c8d;
-    cursor: not-allowed;
-  }
-  
+  padding: 20px;
+  color: #E8EAF6; /* Consistent white text color */
+  background-color: #1C1C1E;
+  border-radius: 8px;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  padding: 10px;
+  border-radius: 5px; 
+  color: #E8EAF6; /* White text color for title */
+}
+
+.dropdownContainer {
+  position: relative;
+  width: 250px;
+  margin-bottom: 20px;
+}
+
+.select {
+  width: 100%;
+  padding: 10px;
+  background-color: #1C1C1E;
+  color: #E8EAF6; /* White text color for dropdown */
+  border: 1px solid #424242;
+  border-radius: 5px;
+  appearance: none;
+}
+
+.select:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.5); 
+}
+
+.label {
+  font-weight: 500;
+  margin-bottom: 5px; 
+  color: #E8EAF6; /* White text color for labels */
+}
+
+.submissionsSection {
+  background-color: #2C2C2E;
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.submissionsTitle {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 15px;
+  color: #E8EAF6; /* White text color for title */
+}
+
+.loading {
+  text-align: center;
+  font-style: italic;
+  color: #E8EAF6; /* White text color for loading message */
+}
+
+/* Table Styling */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  background-color: #2C2C2E; /* Slightly lighter background for the table */
+  border-radius: 8px;
+  overflow-x: auto; /* Enable horizontal scrolling */ 
+}
+
+.table th, .table td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #424242;
+}
+
+.table th {
+  background-color: #37373D; /* Even lighter background for table header */
+  color: #E8EAF6;
+  font-size: 14px;
+}
+
+.table td {
+  background-color: #2C2C2E;
+  color: #E8EAF6;
+}
+
+
+.table tbody tr:nth-child(even) {
+  background-color: #262626; /* Slightly different shade for even rows */
+}
+
+.table tbody tr:hover {
+  background-color: #37373D; /* Highlight row on hover */
+}
+
+.table td {
+  background-color: #1C1C1E;
+  color: #E8EAF6; 
+}
+.pagination {
+  display: flex;
+  justify-content: flex-end;
+  gap: 5px;
+  margin-top: 10px;
+}
+
+.pageButton {
+  background-color: #3498db;
+  color: #fff;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.pageButton:disabled {
+  background-color: #7fb3d5;
+  cursor: not-allowed;
+}
+
+.pageButton:hover:not(:disabled) {
+  background-color: #2980b9;
+}
+
+.pageInfo {
+  color: #E8EAF6; /* White text color for page info */
+}
+
+.noSubmissions {
+  color: #E8EAF6; /* White text color for no submissions message */
+  font-style: italic;
+  text-align: center;
+  margin-top: 20px;
+}

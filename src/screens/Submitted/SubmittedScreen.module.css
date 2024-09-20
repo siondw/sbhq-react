@@ -12,7 +12,8 @@
 }
 
 .mainTextContainer {
-    width: 100%;      display: flex;
+    width: 100%;      
+    display: flex;
     justify-content: center;
     margin-bottom: 20px;  
     padding: 20px;
@@ -26,4 +27,21 @@
 
 .ballGif {
     justify-self: center;
+}
+
+.waitingContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.message {
+    font-size: 1.2em;
+    margin-top: 10px;
+}
+
+.error {
+    color: red;
+    font-size: 1.2em;
+    margin-top: 10px;
 }

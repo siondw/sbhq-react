@@ -18,7 +18,9 @@ function LobbyScreen() {
     const db = getDatabase();
 
     // Fetch participants from the new structure
-    const participantsRef = ref(db, `participants/${contest.id}`);
+    console.log("contest.id", contest.id);
+    const participantsRef = ref(db, `contests/${contest.id}/participants`);
+    console.log("participantsRef", participantsRef);
     onValue(participantsRef, (snapshot) => {
       const participantsData = snapshot.val();
       const activePlayers = participantsData
