@@ -1,27 +1,35 @@
-// src/pages/SubmittedScreen/SubmittedScreen.js
 import React, { useState, useEffect } from 'react';
-import Header from '../../components/Header/Header';  // Adjust the path as necessary
+import Header from '../../components/Header/Header';  
 import MainText from '../../components/MainText/MainText';
 import styles from './SubmittedScreen.module.css';  
-
 import ballGif from '../../assets/ball.gif';  
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getDatabase, ref, onValue, off } from "firebase/database";
-import { LoadingSpinner } from '../../components/LoadingSpinner/LoadingSpinner'; // Assuming you have a LoadingSpinner component
 
 function SubmittedScreen() {
     const navigate = useNavigate();
     const location = useLocation();
-    const { contestId, questionId, userId, userAnswer } = location.state || {};
+    
+    // Get the full contest object from state
+    const { contest, questionId, userId, userAnswer } = location.state || {};
+    const contestId = contest?.id;
 
     const [correctAnswer, setCorrectAnswer] = useState(null);
     const [statusChecked, setStatusChecked] = useState(false);
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        if (!contestId || !questionId || !userId || !userAnswer) {
-            // Invalid state, redirect to error page
-            navigate('/error', { replace: true, state: { message: 'Invalid submission data.' } });
+        if (!contestId || !questionId || !userId) {
+            // Invalid state, redirect to login page
+            navigate('/login', { replace: true, state: { message: 'Invalid submission data.' } });
+            return;
+        }
+    }, [contestId, questionId, userId, navigate]);
+
+    useEffect(() => {
+        if (!userAnswer) {
+            // Invalid state, redirect to eliminated page
+            navigate('/eliminated', { replace: true, state: { message: 'Invalid submission data.' } });
             return;
         }
 
@@ -50,12 +58,14 @@ function SubmittedScreen() {
     useEffect(() => {
         if (statusChecked) {
             if (userAnswer === correctAnswer) {
-                navigate('/correct', { replace: true, state: { contestId, questionId } });
+                // Pass the full contest object when navigating to CorrectScreen
+                navigate('/correct', { replace: true, state: { contest, questionId } });
             } else {
-                navigate('/eliminated', { replace: true, state: { contestId, questionId } });
+                // Similarly, pass necessary state when navigating to EliminatedScreen
+                navigate('/eliminated', { replace: true, state: { contest, questionId } });
             }
         }
-    }, [statusChecked, userAnswer, correctAnswer, navigate, contestId, questionId]);
+    }, [statusChecked, userAnswer, correctAnswer, navigate, contest, questionId]);
 
     return (
         <div className={styles.submittedScreen}>
@@ -72,13 +82,6 @@ function SubmittedScreen() {
                 <img src={ballGif} alt="Awaiting results" className={styles.ballGif} style={{ width: 250, height: 250 }} /> 
             </div>
 
-            {/* Display loading spinner and message while waiting */}
-            {!statusChecked && !error && (
-                <div className={styles.waitingContainer}>
-                    <LoadingSpinner />
-                    <p className={styles.message}>Your answer has been submitted. Please wait for the results...</p>
-                </div>
-            )}
 
             {/* Display error message if any */}
             {error && <p className={styles.error}>{error}</p>}

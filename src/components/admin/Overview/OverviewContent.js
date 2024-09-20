@@ -1,8 +1,10 @@
-// OverviewContent.js
+// src/components/OverviewContent/OverviewContent.js
+
 import React, { useState, useEffect } from 'react';
-import { getDatabase, ref, onValue, off, get, child } from "firebase/database";
+import { getDatabase, ref, onValue, off, get, set, update } from "firebase/database";
 import styles from './OverviewContent.module.css'; // Import the CSS file
 import { UserGroupIcon, RefreshIcon, QuestionMarkCircleIcon } from '@heroicons/react/outline'; // Import Heroicons
+import { useAuth } from "../../../contexts/AuthContext"; // Import AuthContext
 
 const OverviewContent = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -11,6 +13,17 @@ const OverviewContent = () => {
   const [currentRound, setCurrentRound] = useState(0);
   const [currentQuestion, setCurrentQuestion] = useState("");
   const [error, setError] = useState(null);
+  const { user } = useAuth(); // Get current user
+  const [isAdmin, setIsAdmin] = useState(false); // Admin flag
+
+  useEffect(() => {
+    // Determine if the user is an admin
+    if (user && user.role === 'admin') { // Adjust based on your user schema
+      setIsAdmin(true);
+    } else {
+      setIsAdmin(false);
+    }
+  }, [user]);
 
   useEffect(() => {
     const db = getDatabase();
@@ -99,6 +112,67 @@ const OverviewContent = () => {
     };
   }, []);
 
+  const handleToggleSubmissions = async () => {
+    if (!contest) return;
+    const db = getDatabase();
+
+    try {
+      const submissionsOpenRef = ref(db, `contests/${contest.id}/submissionsOpen`);
+      const submissionsSnapshot = await get(submissionsOpenRef);
+      const submissionsOpen = submissionsSnapshot.val();
+
+      if (submissionsOpen) {
+        // **Closing Submissions**
+        await set(submissionsOpenRef, false);
+
+        // Fetch all submissions for the contest
+        const submissionsSnapshot = await get(ref(db, `submissions/${contest.id}`));
+        const submissionsData = submissionsSnapshot.val();
+
+        // Fetch all participants
+        const participantsSnapshot = await get(ref(db, `contests/${contest.id}/participants`));
+        const participantsData = participantsSnapshot.val();
+
+        if (!participantsData) {
+          console.log("No participants found.");
+          return;
+        }
+
+        // Identify users who have submitted
+        const submittedUserIds = new Set();
+        if (submissionsData) {
+          Object.values(submissionsData).forEach(questionSubmissions => {
+            Object.keys(questionSubmissions).forEach(userId => {
+              submittedUserIds.add(userId);
+            });
+          });
+        }
+
+        // Prepare updates for users who didn't submit
+        const updates = {};
+        Object.keys(participantsData).forEach(userId => {
+          if (participantsData[userId].active && !submittedUserIds.has(userId)) {
+            updates[`contests/${contest.id}/participants/${userId}/active`] = false;
+          }
+        });
+
+        // Apply updates
+        if (Object.keys(updates).length > 0) {
+          await update(ref(db), updates);
+          console.log("Eliminated users who did not submit.");
+        } else {
+          console.log("No users to eliminate.");
+        }
+      } else {
+        // **Opening Submissions**
+        await set(submissionsOpenRef, true);
+      }
+    } catch (error) {
+      console.error("Error toggling submissions:", error);
+      alert("There was an error toggling submissions. Please try again.");
+    }
+  };
+
   if (isLoading) {
     return <div className={styles.loading}>Loading overview...</div>;
   }
@@ -139,6 +213,18 @@ const OverviewContent = () => {
           <p className={styles.cardValue}>{currentQuestion}</p>
         </div>
       </div>
+
+      {/* Admin Controls */}
+           {(
+        <div className={styles.adminControls}>
+          <button
+            className={`${styles.toggleButton} ${contest.submissionsOpen ? styles.close : styles.open}`}
+            onClick={handleToggleSubmissions}
+          >
+            {contest.submissionsOpen ? "Close Submissions" : "Open Submissions"}
+          </button>
+        </div>
+      )}
     </div>
   );
 };
