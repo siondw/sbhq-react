@@ -1,0 +1,23 @@
+.authScreen {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .header {
+    position: sticky;
+    top: 0;
+    width: 100%;
+  }
+  
+  .screenContent {
+    padding-top: 64px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    align-items: center;
+  }
+  

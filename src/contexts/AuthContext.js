@@ -1,57 +1,60 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "../firebase";
+import { supabase } from "../supabase"; // Your Supabase client
 
 const AuthContext = createContext(null);
 
-/**
- * Provides authentication context for the application.
- * @param {Object} props - The component props.
- * @param {ReactNode} props.children - The child components.
- * @returns {ReactNode} - The component with authentication context.
- */
 export const AuthProvider = ({ children }) => {
   const [authState, setAuthState] = useState({
     user: null, // Tracks the authenticated user
-    confirmationResult: null, // Tracks the phone verification result
+    session: null, // Tracks the authentication session
   });
+  const [isLoading, setIsLoading] = useState(true); // Tracks loading state for authentication
 
-  // Listen for changes in the authentication state
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        console.log("User signed in:", user); // Add this line
-        // User is signed in
-        setAuthState((currentState) => ({ ...currentState, user }));
-      } else {
-        console.log("User signed out"); // Add this line
-        // User is signed out
-        setAuthState((currentState) => ({ ...currentState, user: null }));
+    // Initialize authentication state on load
+    const initializeAuth = async () => {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error("Error fetching session:", error.message);
+        setIsLoading(false);
+        return;
       }
+
+      setAuthState({
+        user: session?.user || null,
+        session: session || null,
+      });
+      setIsLoading(false);
+    };
+
+    initializeAuth();
+
+    // Listen for authentication state changes
+    const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log("Auth state changed:", _event, session); // Debug log
+      setAuthState({
+        user: session?.user || null,
+        session: session || null,
+      });
     });
 
-    return unsubscribe; // Cleanup subscription
+    // Clean up the subscription on unmount
+    return () => {
+      if (subscription?.unsubscribe) {
+        subscription.unsubscribe(); // Correctly unsubscribe
+      } else {
+        console.warn("No unsubscribe method found on subscription");
+      }
+    };
   }, []);
 
-  /**
-   * Sets the phone verification result in the authentication state.
-   * @param {Object} confirmationResult - The phone verification result.
-   */
-  const setConfirmationResult = (confirmationResult) => {
-    setAuthState((current) => ({ ...current, confirmationResult }));
-  };
-
-  /**
-   * Sets the authenticated user in the authentication state.
-   * @param {Object} user - The authenticated user.
-   */
   const setUser = (user) => {
     setAuthState((current) => ({ ...current, user }));
   };
 
   return (
-    <AuthContext.Provider value={{ ...authState, setConfirmationResult, setUser }}>
-      {children}
+    <AuthContext.Provider value={{ ...authState, setUser }}>
+      {isLoading ? <div>Loading authentication...</div> : children}
     </AuthContext.Provider>
   );
 };

@@ -1,102 +1,85 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import Header from "../../components/Header/Header";
 import MainText from "../../components/MainText/MainText";
-import PinInput from "../../components/PinInput/PinInput";
+import UsernameInput from "../../components/UsernameInput/UsernameInput";
 import styles from "./VerificationScreen.module.css";
-import { useAuth } from "../../contexts/AuthContext";
-import { getAuth, onAuthStateChanged, updateProfile } from "firebase/auth";
-import * as UserService from "../../services/UserServices";
-import { checkOpenLobbies } from "../../services/LobbyService"; // Import the service function
+import { supabase } from "../../supabase"; // Import your Supabase client
 
 function VerificationScreen() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const { phoneNumber, isNewUser, username } = location.state; // Destructure state
-  const { confirmationResult, setUser } = useAuth();
   const [error, setError] = useState("");
-  const [isUserAuthenticated, setIsUserAuthenticated] = useState(false);
-  const [currentUser, setCurrentUser] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [userHasUsername, setUserHasUsername] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState(null);
+  const hasFetchedData = useRef(false); // Prevents multiple fetches
 
   useEffect(() => {
-    const auth = getAuth();
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        console.log("User is authenticated:", user);
-        setIsUserAuthenticated(true);
-        setCurrentUser(user);
-      } else {
-        console.log("User is not authenticated");
-        setIsUserAuthenticated(false);
-        setCurrentUser(null);
-      }
-    });
+    const fetchUserData = async () => {
+      if (hasFetchedData.current) return; // Avoid duplicate requests
+      hasFetchedData.current = true;
 
-    return () => unsubscribe();
-  }, []);
-
-  const onSubmitVerificationCode = async (pin) => {
-    if (confirmationResult) {
       try {
-        const result = await confirmationResult.confirm(pin);
-        console.log("Verification result:", result);
-        const user = result.user;
-        console.log("User verified with UID:", user.uid);
-
-        // Set the authenticated user in AuthContext
-        setUser(user);
-
-        // Update the user's profile in Firebase Authentication to include the username as displayName
-        if (user && !user.displayName) {
-          await updateProfile(user, { displayName: username });
-          console.log("Display name set to:", username);
-          setUser({ ...user, displayName: username });
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError || !sessionData?.session) {
+          throw new Error("Failed to get current session");
         }
 
-        const userExists = await UserService.checkUserExists(user.uid);
-        console.log("User exists:", userExists);
+        const { user } = sessionData.session;
+        setCurrentUserId(user.id);
 
-        if (!userExists) {
-          await UserService.addUserToDB(user.uid, username, user.phoneNumber);
-          console.log("New user added to database.");
-        } else {
-          console.log("User already exists, retrieving details.");
-          const userDetails = await UserService.getUserDetails(user.uid);
-          console.log("Retrieved user details:", userDetails);
+        const { data, error } = await supabase
+          .from("users")
+          .select("username")
+          .eq("id", user.id)
+          .single();
+
+        if (error) {
+          throw new Error("Error checking username in the database");
         }
 
-        // Check for open lobbies
-        const openLobbyContest = await checkOpenLobbies();
-        if (openLobbyContest) {
-          const isUserRegistered =
-            openLobbyContest.participants &&
-            openLobbyContest.participants.hasOwnProperty(user.uid);
-          if (isUserRegistered) {
-            console.log("Navigating to lobby with contest:", openLobbyContest); // Debugging statement
-            navigate("/lobby", { state: { contest: openLobbyContest } });
-          } else {
-            console.log(
-              "User is not registered for any open lobbies. Redirecting to Join Contests screen."
-            );
+        // Check if the `username` is null
+        setUserHasUsername(!!data?.username);
+
+        // If the user has a username, delay the redirect by 1 second
+        if (data?.username) {
+          setTimeout(() => {
             navigate("/join-contests");
-          }
-        } else {
-          console.log(
-            "No open lobbies found. Redirecting to Join Contests screen."
-          );
-          navigate("/join-contests");
+          }, 1000); // 1-second delay
         }
-      } catch (error) {
-        console.error(
-          "Failed during user verification or database operations:",
-          error
-        );
-        setError(
-          "Failed to verify code or handle user data. Please try again."
-        );
+      } catch (err) {
+        setError(err.message || "An unexpected error occurred.");
+      } finally {
+        setIsLoading(false);
       }
+    };
+
+    fetchUserData();
+  }, [navigate]); // Ensure dependencies include navigate
+
+  const handleUsernameSubmit = async (username) => {
+    setIsLoading(true);
+    try {
+      const { error } = await supabase
+        .from("users")
+        .update({ username })
+        .eq("id", currentUserId);
+
+      if (error) {
+        throw new Error("Failed to save username");
+      }
+
+      navigate("/join-contests");
+    } catch (err) {
+      setError(err.message || "An unexpected error occurred.");
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className={styles.verificationScreen}>
@@ -104,11 +87,20 @@ function VerificationScreen() {
         <Header />
       </div>
       <div className={styles.content}>
-        <MainText
-          header="Enter PIN"
-          subheader="Please enter the 6-digit code we sent to your phone."
-        />
-        <PinInput onPinComplete={onSubmitVerificationCode} />
+        {userHasUsername ? (
+          <MainText
+            header="Welcome Back!"
+            subheader="Redirecting you to your dashboard..."
+          />
+        ) : (
+          <>
+            <MainText
+              header="Set Your Username"
+              subheader="Please choose a unique username to complete your profile."
+            />
+            <UsernameInput onSubmit={handleUsernameSubmit} />
+          </>
+        )}
         {error && <div className={styles.error}>{error}</div>}
       </div>
     </div>

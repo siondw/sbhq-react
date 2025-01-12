@@ -3,8 +3,7 @@ import ReactDOM from "react-dom/client";
 import "./index.css";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 
-import RegistrationScreen from "./screens/Registration/RegistrationScreen";
-import LoginScreen from "./screens/Login/LoginScreen";
+import AuthScreen from "./screens/Auth/AuthScreen"; 
 import PregameScreen from "./screens/Pregame/PregameScreen";
 import QuestionScreen from "./screens/Question/QuestionScreen";
 import SubmittedScreen from "./screens/Submitted/SubmittedScreen";
@@ -14,7 +13,7 @@ import VerificationScreen from "./screens/VerificationScreen/VerificationScreen"
 import LobbyScreen from "./screens/Lobby/LobbyScreen";
 import JoinContestsScreen from "./screens/JoinContests/JoinContestsScreen";
 
-// Use AdminScreen here
+// Admin Dashboard
 import AdminScreen from "./screens/Admin/AdminScreen";
 import OverviewContent from "./components/admin/Overview/OverviewContent";
 import QuestionManagement from "./components/admin/QuestionManagement/QuestionManagement";
@@ -22,7 +21,7 @@ import ParticipantManagement from "./components/admin/ParticipantManagement/Part
 import SubmissionManagement from "./components/admin/SubmissionManagement/SubmissionManagement";
 import ContestManager from "./components/admin/ContestManager/ContestManager";
 
-import { AuthProvider } from "./contexts/AuthContext"; // Adjust the path as necessary
+import { AuthProvider } from "./contexts/AuthContext"; 
 
 import reportWebVitals from "./reportWebVitals";
 
@@ -32,8 +31,10 @@ root.render(
     <Router>
       <AuthProvider>
         <Routes>
-          <Route path="/register" element={<RegistrationScreen />} />
-          <Route path="/login" element={<LoginScreen />} />
+          {/* Start with the unified AuthScreen */}
+          <Route path="/" element={<AuthScreen />} />
+          
+          {/* Other app routes */}
           <Route path="/pregame" element={<PregameScreen />} />
           <Route path="/question" element={<QuestionScreen />} />
           <Route path="/submitted" element={<SubmittedScreen />} />
@@ -50,11 +51,8 @@ root.render(
             <Route path="questions" element={<QuestionManagement />} />
             <Route path="participants" element={<ParticipantManagement />} />
             <Route path="submissions" element={<SubmissionManagement />} />
-            {/* Default route for admin dashboard */}
             <Route path="*" element={<Navigate replace to="/admin/overview" />} />
           </Route>
-
-          <Route path="/" element={<Navigate replace to="/register" />} />
         </Routes>
       </AuthProvider>
     </Router>
