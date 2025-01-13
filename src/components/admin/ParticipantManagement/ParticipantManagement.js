@@ -1,15 +1,6 @@
+// src/components/ParticipantManagement/ParticipantManagement.js
 import React, { useState, useEffect, useRef } from "react";
-import { 
-  getDatabase, 
-  ref, 
-  onValue, 
-  set, 
-  off, 
-  query, 
-  orderByChild, 
-  startAt, 
-  limitToFirst 
-} from "firebase/database";
+import { supabase } from "../../../supabase"; // Your Supabase client
 import styles from "./ParticipantManagement.module.css";
 
 const PARTICIPANTS_PER_PAGE = 10;
@@ -19,186 +10,169 @@ const ParticipantManagement = () => {
   const [contests, setContests] = useState([]);
   const [selectedContestId, setSelectedContestId] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  // We'll track the "last username" for pagination
   const [lastUsername, setLastUsername] = useState(null);
   const [hasMore, setHasMore] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const dropdownRef = useRef(null);
 
-  // Function to load state from localStorage
-  const loadStateFromLocalStorage = () => {
-    const storedContestId = localStorage.getItem("selectedContestId");
-    const storedLastUsername = localStorage.getItem("lastUsername");
-    return { storedContestId, storedLastUsername };
-  };
-
-  // Function to save state to localStorage
-  const saveStateToLocalStorage = (contestId, lastUsername) => {
-    if (contestId) {
-      localStorage.setItem("selectedContestId", contestId);
-    }
-    if (lastUsername) {
-      localStorage.setItem("lastUsername", lastUsername);
-    }
-  };
-
+  // 1) On mount, fetch all contests from Supabase
   useEffect(() => {
-    const db = getDatabase();
+    const fetchContests = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("contests")
+          .select("id, name")
+          .order("name", { ascending: true });
 
-    // Fetch contests from Firebase
-    const contestsRef = ref(db, "contests");
-    const handleContests = (snapshot) => {
-      const contestsData = snapshot.val() || {};
-      const contestsArray = Object.entries(contestsData).map(([id, data]) => ({
-        id,
-        ...data,
-      }));
-      setContests(contestsArray);
+        if (error) throw error;
+        setContests(data || []);
 
-      // After fetching contests, set the selected contest
-      const { storedContestId, storedLastUsername } = loadStateFromLocalStorage();
+        // Restore selected contest from localStorage if possible
+        const storedContestId = localStorage.getItem("selectedContestId");
+        const storedLastUsername = localStorage.getItem("lastUsername");
 
-      if (storedContestId && contestsArray.some(contest => contest.id === storedContestId)) {
-        setSelectedContestId(storedContestId);
-        setLastUsername(storedLastUsername);
-      } else if (contestsArray.length > 0) {
-        setSelectedContestId(contestsArray[0].id);
-        setLastUsername(null);
-        saveStateToLocalStorage(contestsArray[0].id, null);
-      } else {
-        setSelectedContestId("");
-        setLastUsername(null);
-        localStorage.removeItem("selectedContestId");
-        localStorage.removeItem("lastUsername");
+        if (storedContestId && data?.some((c) => c.id === storedContestId)) {
+          setSelectedContestId(storedContestId);
+          setLastUsername(storedLastUsername);
+        } else if (data && data.length > 0) {
+          // Default to the first contest if none stored
+          setSelectedContestId(data[0].id);
+          setLastUsername(null);
+          localStorage.setItem("selectedContestId", data[0].id);
+          localStorage.removeItem("lastUsername");
+        }
+      } catch (err) {
+        console.error("Error fetching contests:", err);
       }
     };
-    onValue(contestsRef, handleContests);
-
-    // Cleanup listener on unmount
-    return () => {
-      off(contestsRef, "value", handleContests);
-    };
+    fetchContests();
   }, []);
 
+  // 2) Whenever selectedContestId changes, reset participants and fetch fresh
   useEffect(() => {
-    if (selectedContestId) {
-      // Reset participants and pagination state
+    if (!selectedContestId) {
       setParticipants([]);
-      setLastUsername(null);
-      setHasMore(true);
-
-      // Fetch participants based on stored lastUsername
-      const { storedLastUsername } = loadStateFromLocalStorage();
-      if (storedLastUsername) {
-        fetchParticipants(storedLastUsername, false);
-      } else {
-        fetchParticipants(null, false);
-      }
-    } else {
-      setParticipants([]); // Clear participants if no contest is selected
+      return;
     }
+
+    // Reset local state
+    setParticipants([]);
+    setHasMore(true);
+    setIsLoading(false);
+
+    // Try to restore lastUsername from localStorage
+    const storedLastUsername = localStorage.getItem("lastUsername");
+    setLastUsername(storedLastUsername || null);
+
+    // Immediately fetch participants from the beginning
+    fetchParticipants(null, false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedContestId]);
 
-  const fetchParticipants = (startUsername = null, isLoadMore = true) => {
-    if (!hasMore && isLoadMore) return;
-    if (isLoading) return;
+  // 3) Keyset-based pagination: fetch participants from Supabase
+  // If startUsername is null, fetch from the beginning
+  // Otherwise, do `username >= startUsername`
+  const fetchParticipants = async (startUsername = null, isLoadMore = true) => {
+    if (!selectedContestId) return;
+    if (!hasMore && isLoadMore) return; // No more to load
+    if (isLoading) return; // Already loading
 
     setIsLoading(true);
-    const db = getDatabase();
-    const participantsRef = ref(db, `contests/${selectedContestId}/participants`);
 
-    let participantsQuery;
+    try {
+      let queryBuilder = supabase
+        .from("participants")
+        .select("*")
+        .eq("contest_id", selectedContestId)
+        .order("username", { ascending: true })
+        .limit(PARTICIPANTS_PER_PAGE + 1);
 
-    if (startUsername) {
-      // Fetch next set starting after the last username
-      participantsQuery = query(
-        participantsRef,
-        orderByChild("username"),
-        startAt(startUsername),
-        limitToFirst(PARTICIPANTS_PER_PAGE + 1) // Fetch one extra to check for more data
-      );
-    } else {
-      // Fetch initial set
-      participantsQuery = query(
-        participantsRef,
-        orderByChild("username"),
-        limitToFirst(PARTICIPANTS_PER_PAGE + 1)
-      );
-    }
-
-    onValue(participantsQuery, (snapshot) => {
-      const participantsData = snapshot.val() || {};
-      const participantsArray = Object.entries(participantsData).map(
-        ([id, data]) => ({
-          id,
-          ...data,
-        })
-      );
-
-      let newParticipants = [];
       if (startUsername) {
-        // Remove the first participant as it was the last from previous fetch
-        newParticipants = participantsArray.slice(1, PARTICIPANTS_PER_PAGE + 1);
-      } else {
-        newParticipants = participantsArray.slice(0, PARTICIPANTS_PER_PAGE);
+        // If we have a last username, we only want rows where username > lastUsername
+        // or >=, depending on how you want to handle duplicates
+        queryBuilder = queryBuilder.gte("username", startUsername);
       }
 
-      if (participantsArray.length <= PARTICIPANTS_PER_PAGE) {
+      const { data, error } = await queryBuilder;
+      if (error) throw error;
+
+      if (!data) {
+        setHasMore(false);
+        setIsLoading(false);
+        return;
+      }
+
+      let newData = data;
+      // If `startUsername` is not null, it means a "Load More" call
+      // But we must skip the first item if it exactly matches the lastUsername
+      // Or if you want inclusive logic, adapt as needed
+      if (startUsername) {
+        // Filter out duplicates (where username is exactly the last username)
+        newData = data.filter((p) => p.username !== startUsername);
+      }
+
+      // If we got fewer than (PARTICIPANTS_PER_PAGE + 1) items after filtering,
+      // that means we have no more pages
+      if (newData.length <= PARTICIPANTS_PER_PAGE) {
         setHasMore(false);
       }
 
-      if (participantsArray.length > PARTICIPANTS_PER_PAGE) {
-        const lastFetched = participantsArray[PARTICIPANTS_PER_PAGE];
-        setLastUsername(lastFetched.username);
-        saveStateToLocalStorage(selectedContestId, lastFetched.username);
-      } else {
-        setLastUsername(null);
-        saveStateToLocalStorage(selectedContestId, null);
+      // If we do have an extra item, that item is the first of the "next" page
+      let lastParticipantUsername = null;
+      if (newData.length > PARTICIPANTS_PER_PAGE) {
+        const extra = newData[PARTICIPANTS_PER_PAGE];
+        lastParticipantUsername = extra.username;
+        // Limit to first N
+        newData = newData.slice(0, PARTICIPANTS_PER_PAGE);
       }
 
-      setParticipants((prev) => [...prev, ...newParticipants]);
-      setIsLoading(false);
-    }, {
-      onlyOnce: true, // Fetch data once per request
-    });
+      // Merge with existing participants
+      setParticipants((prev) => [...prev, ...newData]);
 
-    // Cleanup the listener
-    return () => {
-      off(participantsRef, "value");
-    };
+      // Update lastUsername
+      if (lastParticipantUsername) {
+        setLastUsername(lastParticipantUsername);
+        localStorage.setItem("lastUsername", lastParticipantUsername);
+      } else if (newData.length > 0) {
+        // If we exactly matched the page size but no extra, we might store the last item’s username
+        const lastItem = newData[newData.length - 1];
+        setLastUsername(lastItem.username);
+        localStorage.setItem("lastUsername", lastItem.username);
+      } else {
+        // No data at all
+        setLastUsername(null);
+        localStorage.removeItem("lastUsername");
+      }
+    } catch (err) {
+      console.error("Error fetching participants:", err);
+    }
+
+    setIsLoading(false);
   };
 
-  const handleContestChange = (contestId) => {
-    setSelectedContestId(contestId);
-    setDropdownOpen(false);
-    saveStateToLocalStorage(contestId, null);
-  };
-
-  const toggleDropdown = () => {
-    setDropdownOpen(!dropdownOpen);
-  };
-
+  // 4) Toggle participant's active status
   const toggleStatus = async (participantId) => {
     try {
-      const db = getDatabase();
-      const participantRef = ref(
-        db,
-        `contests/${selectedContestId}/participants/${participantId}/active`
-      );
       const participant = participants.find((p) => p.id === participantId);
       if (!participant) {
         alert("Participant not found.");
         return;
       }
       const currentStatus = participant.active;
-      await set(participantRef, !currentStatus); // Use 'set' instead of 'update'
-  
-      // Update participant status in the state
-      setParticipants((prevParticipants) =>
-        prevParticipants.map((p) =>
-          p.id === participantId
-            ? { ...p, active: !currentStatus }
-            : p
+
+      const { error } = await supabase
+        .from("participants")
+        .update({ active: !currentStatus })
+        .eq("id", participantId);
+
+      if (error) throw error;
+
+      // Update local state
+      setParticipants((prev) =>
+        prev.map((p) =>
+          p.id === participantId ? { ...p, active: !currentStatus } : p
         )
       );
     } catch (error) {
@@ -207,13 +181,22 @@ const ParticipantManagement = () => {
     }
   };
 
-  // Close dropdown when clicking outside
+  // 5) Dropdown logic
+  const handleContestChange = (contestId) => {
+    setSelectedContestId(contestId);
+    setDropdownOpen(false);
+    localStorage.setItem("selectedContestId", contestId);
+    localStorage.removeItem("lastUsername");
+  };
+
+  const toggleDropdown = () => {
+    setDropdownOpen(!dropdownOpen);
+  };
+
+  // 6) Close dropdown if user clicks outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target)
-      ) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setDropdownOpen(false);
       }
     };
@@ -240,9 +223,7 @@ const ParticipantManagement = () => {
             ? contests.find((c) => c.id === selectedContestId)?.name || "Contest"
             : "Select a Contest"}
           <span
-            className={`${styles.dropdownArrow} ${
-              dropdownOpen ? styles.open : ""
-            }`}
+            className={`${styles.dropdownArrow} ${dropdownOpen ? styles.open : ""}`}
           >
             ▼
           </span>
@@ -268,7 +249,7 @@ const ParticipantManagement = () => {
         )}
       </div>
 
-      {/* Table to display participants */}
+      {/* Table of Participants */}
       {selectedContestId && (
         <div className={styles.tableContainer}>
           {participants.length > 0 ? (
@@ -306,13 +287,18 @@ const ParticipantManagement = () => {
                   ))}
                 </tbody>
               </table>
+
+              {/* Pagination: "Load More" button */}
               {isLoading && <p>Loading...</p>}
               {!isLoading && hasMore && (
-                <button onClick={() => fetchParticipants(lastUsername)} className={styles.loadMoreButton}>
+                <button
+                  onClick={() => fetchParticipants(lastUsername, true)}
+                  className={styles.loadMoreButton}
+                >
                   Load More
                 </button>
               )}
-              {!hasMore && <p>No more participants to display.</p>}
+              {!hasMore && !isLoading && <p>No more participants to display.</p>}
             </>
           ) : (
             <p className={styles.noParticipants}>

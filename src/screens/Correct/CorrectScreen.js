@@ -1,132 +1,163 @@
 // src/pages/CorrectScreen/CorrectScreen.js
-
 import React, { useState, useEffect } from "react";
-import { getDatabase, ref, onValue, off } from "firebase/database";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+
+import { supabase } from "../../supabase";
 import Header from "../../components/Header/Header";
 import MainText from "../../components/MainText/MainText";
 import GameStatsSummary from "../../components/GameStatsSummary/GameStatsSummary";
 import styles from "./CorrectScreen.module.css";
-import { useAuth } from "../../contexts/AuthContext"; // Assuming there's an AuthContext to get user info
-import useRequireState from "../../hooks/useRequireState"; // Reusing the custom hook for state validation
+
+import { useAuth } from "../../contexts/AuthContext";
+import useRequireState from "../../hooks/useRequireState";
 
 function CorrectScreen() {
   const navigate = useNavigate();
-  const location = useLocation();
-  
-  // Use the custom hook to require 'contest' in location.state
-  const { contest } = useRequireState(["contest"], "/login"); // Redirect to '/login' if 'contest' is missing
 
-  const contestId = contest?.id;
-  const { user, loading: authLoading } = useAuth(); // Retrieve user data
+  // Ensure we have `contest` in location.state, otherwise redirect
+  const { contest } = useRequireState(["contest"], "/");
+  const { user, loading: authLoading } = useAuth();
 
-  const [currentRound, setCurrentRound] = useState(contest?.currentRound); // Start with the current round
-  const [isActive, setIsActive] = useState(true); // Assume active until told otherwise
+  // We'll display the round number if needed
+  const [currentRound, setCurrentRound] = useState(contest?.current_round ?? 1);
+  const [numberOfRemainingPlayers, setNumberOfRemainingPlayers] = useState(0);
+  const [loadingPlayers, setLoadingPlayers] = useState(true);
 
-  const [numberOfRemainingPlayers, setNumberOfRemainingPlayers] = useState(0); // Dynamic count
-  const [loadingPlayers, setLoadingPlayers] = useState(true); // Loading state for players
-  const [errorFetchingPlayers, setErrorFetchingPlayers] = useState(null); // Error state for players
-
-  const gradientStyle = "linear-gradient(180deg, #01710C 0%, #54627B 100%)"; // Example gradient
-
+  // 1) On mount, fetch participants & see if user is still active
   useEffect(() => {
-    if (!contestId || !user?.uid) return; // Ensure we have both contestId and userId
+    if (!contest?.id || !user?.id) return;
 
-    const db = getDatabase();
+    const fetchParticipants = async () => {
+      try {
+        const { data: participants, error } = await supabase
+          .from("participants")
+          .select("*")
+          .eq("contest_id", contest.id);
 
-    // References to listen to
-    const roundRef = ref(db, `contests/${contestId}/currentRound`);
-    const activeStatusRef = ref(db, `contests/${contestId}/participants/${user.uid}/active`);
-    const participantsRef = ref(db, `contests/${contestId}/participants`);
+        if (error) throw error;
+        if (!participants) return;
 
-    // Listener for round changes
-    const handleRoundChange = (snapshot) => {
-      const newRound = snapshot.val();
-      if (newRound !== null && newRound !== currentRound) {
-        setCurrentRound(newRound); // Update current round
-        // Redirect to the QuestionScreen with updated contest details
-        navigate("/question", { state: { contest: { ...contest, currentRound: newRound } } });
-      }
-    };
+        // Count how many are active
+        const activePlayers = participants.filter((p) => p.active).length;
+        setNumberOfRemainingPlayers(activePlayers);
 
-    // Listener for user's active status
-    const handleActiveStatus = (snapshot) => {
-      const activeStatus = snapshot.val();
-      if (activeStatus === false) {
-        // If the participant is inactive, direct them to the eliminated screen
-        navigate("/eliminated");
-      }
-    };
+        // Check if *this* user is still active
+        const userParticipant = participants.find((p) => p.user_id === user.id);
+        if (!userParticipant || !userParticipant.active) {
+          navigate("/eliminated", { replace: true });
+          return;
+        }
 
-    // Listener for participants to count active players
-    const handleParticipants = (snapshot) => {
-      const participantsData = snapshot.val();
-      console.log("Fetched participants data from Firebase:", participantsData);
-
-      if (!participantsData) {
-        console.warn("No participants found for contest:", contestId);
-        setNumberOfRemainingPlayers(0);
         setLoadingPlayers(false);
-        return;
+      } catch (err) {
+        console.error("Error fetching participants:", err);
+        setLoadingPlayers(false);
       }
-
-      // Count active participants
-      const activeCount = Object.values(participantsData).reduce((count, participant) => {
-        return participant.active ? count + 1 : count;
-      }, 0);
-
-      console.log(`Number of active participants: ${activeCount}`);
-      setNumberOfRemainingPlayers(activeCount);
-      setLoadingPlayers(false);
     };
 
-    // Attach listeners
-    onValue(roundRef, handleRoundChange, (error) => {
-      console.error("Error fetching currentRound:", error);
-    });
+    fetchParticipants();
+  }, [contest?.id, user?.id, navigate]);
 
-    onValue(activeStatusRef, handleActiveStatus, (error) => {
-      console.error("Error fetching activeStatus:", error);
-    });
-
-    onValue(participantsRef, handleParticipants, (error) => {
-      console.error("Error fetching participants:", error);
-      setErrorFetchingPlayers("There was an error fetching the participants.");
-      setLoadingPlayers(false);
-    });
-
-    // Cleanup listeners on unmount
-    return () => {
-      off(roundRef, "value", handleRoundChange);
-      off(activeStatusRef, "value", handleActiveStatus);
-      off(participantsRef, "value", handleParticipants);
-    };
-  }, [contestId, user?.uid, navigate, contest, currentRound]);
-
-  // Prevent the user from going back after submitting
+  // 2) Subscribe to real-time updates in `contests` and `participants`
   useEffect(() => {
-    const preventBackNavigation = () => {
+    if (!contest?.id || !user?.id) return;
+
+    // Listen for changes in the `contests` table for this contest
+    const contestChannel = supabase
+      .channel(`contest-${contest.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "contests",
+          filter: `id=eq.${contest.id}`,
+        },
+        (payload) => {
+          const newRound = payload.new.current_round;
+          const newSubmissionOpen = payload.new.submission_open;
+
+          // Always keep our local round in sync, in case the admin changes it
+          setCurrentRound(newRound);
+
+          // If the admin opened submissions, we assume it's time for the next question
+          if (newSubmissionOpen === true) {
+            navigate("/question", {
+              replace: true,
+              state: {
+                contest: {
+                  ...contest,
+                  current_round: newRound,
+                  submission_open: true,
+                },
+              },
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    // Listen for updates to participants in this contest
+    const participantsChannel = supabase
+      .channel(`participants-${contest.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "participants",
+          filter: `contest_id=eq.${contest.id}`,
+        },
+        async (payload) => {
+          try {
+            const { data: updatedParticipants, error } = await supabase
+              .from("participants")
+              .select("*")
+              .eq("contest_id", contest.id);
+
+            if (error || !updatedParticipants) return;
+
+            // Recount how many are active
+            const activeCount = updatedParticipants.filter((p) => p.active)
+              .length;
+            setNumberOfRemainingPlayers(activeCount);
+
+            // If the user is now inactive, eliminate them
+            const userParticipant = updatedParticipants.find(
+              (p) => p.user_id === user.id
+            );
+            if (!userParticipant || !userParticipant.active) {
+              navigate("/eliminated", { replace: true });
+            }
+          } catch (err) {
+            console.error("Error refreshing participants:", err);
+          }
+        }
+      )
+      .subscribe();
+
+    // Cleanup on unmount
+    return () => {
+      supabase.removeChannel(contestChannel);
+      supabase.removeChannel(participantsChannel);
+    };
+  }, [contest?.id, user?.id, navigate]);
+
+  // 3) Prevent back navigation
+  useEffect(() => {
+    const blockBack = () => {
       window.history.pushState(null, document.title, window.location.href);
     };
-
-    // Add an event listener to prevent the back button from working
-    window.addEventListener("popstate", preventBackNavigation);
-
-    // Clean up the event listener on component unmount
-    return () => {
-      window.removeEventListener("popstate", preventBackNavigation);
-    };
+    window.addEventListener("popstate", blockBack);
+    return () => window.removeEventListener("popstate", blockBack);
   }, []);
 
+  // If still loading user info or the participant data
   if (authLoading || loadingPlayers) {
     return <div>Loading...</div>;
   }
 
-  if (errorFetchingPlayers) {
-    console.error("Error fetching players:", errorFetchingPlayers);
-    return <div>Error: {errorFetchingPlayers}</div>;
-  }
-
+  // Render the “Correct” screen
   return (
     <div className={styles.correctScreen}>
       <Header />
@@ -138,12 +169,12 @@ function CorrectScreen() {
         <MainText
           header=""
           subheader="Stay Tuned for the Next Question..."
-          gradient={gradientStyle}
+          gradient="linear-gradient(180deg, #01710C 0%, #54627B 100%)"
         />
       </div>
       <GameStatsSummary
         numberOfRemainingPlayers={numberOfRemainingPlayers}
-        roundNumber={currentRound || 1} // Display the current round
+        roundNumber={currentRound || 1}
         className={styles.gameStatsSummary}
       />
     </div>

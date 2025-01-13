@@ -7,25 +7,25 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "../../supabase";
 
 function SubmittedScreen() {
-  console.log("SubmittedScreen mounted with raw state:", location.state);
-  
   const navigate = useNavigate();
   const location = useLocation();
 
+  console.log("SubmittedScreen mounted with raw state:", location.state);
+
   const { contest, questionId, selectedAnswer, userId } = location.state || {};
-  
+
   console.log("Destructured state values:", {
     contest,
     questionId,
     selectedAnswer,
     userId,
-    hasState: !!location.state
+    hasState: !!location.state,
   });
 
   useEffect(() => {
     if (!location.state) {
       console.error("No state provided to SubmittedScreen");
-      navigate("/login");
+      navigate("/");
       return;
     }
 
@@ -33,9 +33,9 @@ function SubmittedScreen() {
       console.error("Missing required state:", {
         contestId: contest?.id,
         questionId,
-        selectedAnswer
+        selectedAnswer,
       });
-      navigate("/login");
+      navigate("/");
       return;
     }
   }, [location.state, contest, questionId, selectedAnswer, navigate]);
@@ -58,8 +58,10 @@ function SubmittedScreen() {
   useEffect(() => {
     console.log("First useEffect running - validation check");
     if (!contestId || !questionId || selectedAnswer === undefined) {
-      console.log("Missing required data in location.state. Redirecting to /login...");
-      navigate("/login", {
+      console.log(
+        "Missing required data in location.state. Redirecting to /..."
+      );
+      navigate("/", {
         replace: true,
         state: { message: "Invalid submission data." },
       });
@@ -109,7 +111,10 @@ function SubmittedScreen() {
         },
         (payload) => {
           const updatedCorrectOption = payload.new.correct_option;
-          console.log("Real-time update received. New correct_option:", updatedCorrectOption);
+          console.log(
+            "Real-time update received. New correct_option:",
+            updatedCorrectOption
+          );
 
           if (updatedCorrectOption !== null) {
             setCorrectAnswer(updatedCorrectOption);
@@ -129,7 +134,12 @@ function SubmittedScreen() {
   useEffect(() => {
     if (statusChecked && !hasNavigated) {
       console.log("Evaluating answer...");
-      console.log("User answer:", selectedAnswer, "Correct answer:", correctAnswer);
+      console.log(
+        "User answer:",
+        selectedAnswer,
+        "Correct answer:",
+        correctAnswer
+      );
 
       if (selectedAnswer === correctAnswer) {
         console.log("Answer is correct. Navigating to /correct...");
@@ -138,10 +148,21 @@ function SubmittedScreen() {
       } else {
         console.log("Answer is incorrect. Navigating to /eliminated...");
         setHasNavigated(true);
-        navigate("/eliminated", { replace: true, state: { contest, questionId } });
+        navigate("/eliminated", {
+          replace: true,
+          state: { contest, questionId },
+        });
       }
     }
-  }, [statusChecked, selectedAnswer, correctAnswer, navigate, contest, questionId, hasNavigated]);
+  }, [
+    statusChecked,
+    selectedAnswer,
+    correctAnswer,
+    navigate,
+    contest,
+    questionId,
+    hasNavigated,
+  ]);
 
   return (
     <div className={styles.submittedScreen}>

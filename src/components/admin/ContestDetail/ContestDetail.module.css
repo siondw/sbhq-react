@@ -1,0 +1,35 @@
+/* ContestDetail.module.css */
+.contestDetail {
+    background-color: #121212;
+    color: #fff;
+    min-height: 100vh;
+    padding: 2rem;
+  }
+  .title {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+  }
+  .togglesRow {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  .toggleItem {
+    background-color: #2a2a2a;
+    padding: 1rem;
+    border-radius: 6px;
+  }
+  .toggleButton, .submitButton, .refreshButton {
+    background-color: #00bfa6;
+    color: #121212;
+    padding: 0.5rem 1rem;
+    border: none;
+    cursor: pointer;
+    margin-left: 0.5rem;
+    border-radius: 4px;
+  }
+  .toggleButton:hover, .submitButton:hover, .refreshButton:hover {
+    background-color: #00dbb9;
+  }
+  /* ... etc. rest of your styling ... */
+  

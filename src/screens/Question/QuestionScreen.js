@@ -20,6 +20,10 @@ function QuestionScreen() {
   const [errorFetchingQuestions, setErrorFetchingQuestions] = useState(null);
   const [currentRound, setCurrentRound] = useState(null);
 
+  // We'll store a local error message if an inactive user tries to submit
+  const [inactiveError, setInactiveError] = useState("");
+
+  // 1) On mount, fetch the current contest data & questions
   useEffect(() => {
     if (!contest) {
       console.error("Contest data is missing.");
@@ -42,6 +46,7 @@ function QuestionScreen() {
         setSubmissionsOpen(contestData.submission_open);
         setCurrentRound(contestData.current_round);
 
+        // If submissions are closed, auto-submit blank & go to eliminated
         if (!contestData.submission_open) {
           console.log("Submissions are closed, handling blank submission...");
           await handleBlankSubmission();
@@ -51,7 +56,7 @@ function QuestionScreen() {
 
         const { data: questionsData, error: questionsError } = await supabase
           .from("questions")
-          .select("id, question, options")
+          .select("id, question, options, round")
           .eq("contest_id", contest.id)
           .eq("round", contestData.current_round);
 
@@ -75,7 +80,8 @@ function QuestionScreen() {
 
     fetchContestData();
 
-    const channel = supabase
+    // 2) Real-time subscription to see if submissions get closed for this contest
+    const contestChannel = supabase
       .channel(`contest-${contest.id}`)
       .on(
         "postgres_changes",
@@ -97,22 +103,49 @@ function QuestionScreen() {
       )
       .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [contest, navigate]);
+    // 3) Also subscribe to this user's participant row to detect if they become inactive
+    const participantChannel = supabase
+      .channel(`participant-${user?.id}-${contest.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "participants",
+          // Listen only for this contest + this user's participant record
+          filter: `contest_id=eq.${contest.id},user_id=eq.${user?.id}`,
+        },
+        async (payload) => {
+          const newParticipant = payload.new;
+          if (newParticipant && !newParticipant.active) {
+            console.log("User became inactive. Redirecting to /eliminated...");
+            navigate("/eliminated", { state: { contest } });
+          }
+        }
+      )
+      .subscribe();
 
+    return () => {
+      supabase.removeChannel(contestChannel);
+      supabase.removeChannel(participantChannel);
+    };
+  }, [contest, navigate, user?.id]);
+
+  // 4) Handle Submit
   const handleSubmit = async (selectedAnswer, questionId) => {
     console.log("Submit initiated with answer:", selectedAnswer);
+    setInactiveError(""); // Clear any previous error
+
     if (!selectedAnswer) {
       alert("Please select an answer before submitting.");
       return;
     }
 
     try {
+      // Re-fetch participant to ensure they're still active
       const { data: participant, error: participantError } = await supabase
         .from("participants")
-        .select("id")
+        .select("id, active")
         .eq("user_id", user.id)
         .eq("contest_id", contest.id)
         .single();
@@ -123,6 +156,13 @@ function QuestionScreen() {
         throw new Error("Could not find participant information.");
       }
 
+      if (!participant.active) {
+        // If the user is no longer active, show an error in the UI
+        setInactiveError("You are no longer active in this contest.");
+        return;
+      }
+
+      // If still active, insert their answer
       const participantId = participant.id;
 
       const { error: answerError } = await supabase.from("answers").insert({
@@ -138,27 +178,27 @@ function QuestionScreen() {
       }
 
       console.log("Answer submitted successfully.");
-      console.log("Navigating to /submitted with state:", { contest, questionId, selectedAnswer });
       navigate("/submitted", {
         state: {
           contest,
-          questionId: currentQuestion.id,
-          userAnswer: selectedAnswer,
-          userId: user.id, // Pass userId explicitly
+          questionId,
+          selectedAnswer,
+          userId: user.id,
         },
-      });      
+      });
     } catch (err) {
       console.error("Error during submission:", err.message);
       alert("There was an error submitting your answer. Please try again.");
     }
   };
 
+  // 5) If submissions are closed, we do a blank submission and eliminate
   const handleBlankSubmission = async () => {
     console.log("Submitting blank answer...");
     try {
       const { data: participant, error: participantError } = await supabase
         .from("participants")
-        .select("id")
+        .select("id, active")
         .eq("user_id", user.id)
         .eq("contest_id", contest.id)
         .single();
@@ -188,10 +228,12 @@ function QuestionScreen() {
     }
   };
 
+  // 6) Loading states
   if (authLoading) return <div>Loading user information...</div>;
   if (loadingQuestions) return <div>Loading questions...</div>;
   if (errorFetchingQuestions) return <div>Error: {errorFetchingQuestions}</div>;
 
+  // 7) UI display
   const currentQuestion = questions[currentQuestionIndex];
   const questionText = currentQuestion
     ? currentQuestion.question
@@ -208,6 +250,10 @@ function QuestionScreen() {
           header={`Round ${currentRound || "..."}`}
           subheader="Choose Wisely!"
         />
+        {/* Show an error if user tries to submit while inactive */}
+        {inactiveError && (
+          <div className={styles.errorMessage}>{inactiveError}</div>
+        )}
         <div className={styles.questionBlock}>
           <div className={styles.questionText}>{questionText}</div>
           {currentQuestion && (

@@ -1,187 +1,190 @@
-// SubmissionManagement.js
+// src/components/SubmissionManagement/SubmissionManagement.js
 import React, { useState, useEffect } from "react";
-import { getDatabase, ref, onValue, off } from "firebase/database";
+import { supabase } from "../../../supabase";
+import { useAuth } from "../../../contexts/AuthContext";
 import styles from "./SubmissionManagement.module.css";
-import { useAuth } from "../../../contexts/AuthContext"; // Adjust the path as necessary
 
-const ITEMS_PER_PAGE = 10; // Number of submissions per page
+const ITEMS_PER_PAGE = 10;
 
 const SubmissionManagement = () => {
-  const { user, loading: authLoading } = useAuth(); // Get authenticated user
+  const { user, loading: authLoading } = useAuth();
+
   const [contests, setContests] = useState([]);
   const [selectedContestId, setSelectedContestId] = useState("");
+
   const [rounds, setRounds] = useState([]);
-  const [selectedRound, setSelectedRound] = useState("");
+  const [selectedRound, setSelectedRound] = useState(null);
+
   const [questions, setQuestions] = useState([]);
   const [selectedQuestionId, setSelectedQuestionId] = useState("");
-  const [submissions, setSubmissions] = useState({});
+
+  const [submissions, setSubmissions] = useState([]); // array of { participant_id, answer, timestamp }
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Load state from localStorage
+  // 1) Fetch all contests
   useEffect(() => {
-    const storedContestId = localStorage.getItem("selectedContestId");
-    const storedRound = localStorage.getItem("selectedRound");
-    const storedQuestionId = localStorage.getItem("selectedQuestionId");
-    const storedPage = localStorage.getItem("currentPage");
-
-    if (storedContestId) setSelectedContestId(storedContestId);
-    if (storedRound) setSelectedRound(storedRound);
-    if (storedQuestionId) setSelectedQuestionId(storedQuestionId);
-    if (storedPage) setCurrentPage(parseInt(storedPage, 10));
+    const fetchContests = async () => {
+      try {
+        const { data, error } = await supabase.from("contests").select("id, name");
+        if (error) throw error;
+        setContests(data || []);
+      } catch (err) {
+        console.error("Error fetching contests:", err);
+      }
+    };
+    fetchContests();
   }, []);
 
-  // Persist state to localStorage
+  // 2) Whenever selectedContestId changes, fetch all distinct rounds from questions
   useEffect(() => {
-    localStorage.setItem("selectedContestId", selectedContestId);
-    localStorage.setItem("selectedRound", selectedRound);
-    localStorage.setItem("selectedQuestionId", selectedQuestionId);
-    localStorage.setItem("currentPage", currentPage);
-  }, [selectedContestId, selectedRound, selectedQuestionId, currentPage]);
-
-  // Fetch all contests
-  useEffect(() => {
-    const db = getDatabase();
-    const contestsRef = ref(db, "contests");
-
-    const handleContests = (snapshot) => {
-      const data = snapshot.val() || {};
-      const contestsList = Object.values(data);
-      setContests(contestsList);
-
-      // If no contest is selected, select the first one
-      if (contestsList.length > 0 && !selectedContestId) {
-        setSelectedContestId(contestsList[0].id);
+    const fetchRounds = async () => {
+      if (!selectedContestId) {
+        setRounds([]);
+        setSelectedRound(null);
+        return;
+      }
+      try {
+        const { data, error } = await supabase
+          .from("questions")
+          .select("round")
+          .eq("contest_id", selectedContestId);
+        if (error) throw error;
+        const distinctRounds = new Set((data || []).map((q) => q.round));
+        const sorted = Array.from(distinctRounds).sort((a, b) => a - b);
+        setRounds(sorted);
+        // if you want to auto-pick the first round
+        if (sorted.length > 0) {
+          setSelectedRound(sorted[0]);
+        }
+      } catch (err) {
+        console.error("Error fetching rounds:", err);
       }
     };
-
-    onValue(contestsRef, handleContests);
-
-    return () => {
-      off(contestsRef, "value", handleContests);
-    };
+    fetchRounds();
   }, [selectedContestId]);
 
-  // Fetch rounds based on selected contest
+  // 3) Whenever selectedContestId or selectedRound changes, fetch questions
   useEffect(() => {
-    if (!selectedContestId) {
-      setRounds([]);
-      setSelectedRound("");
-      return;
-    }
-
-    const db = getDatabase();
-    const questionsRef = ref(db, `questions/${selectedContestId}`);
-
-    const handleQuestions = (snapshot) => {
-      const data = snapshot.val() || {};
-      const uniqueRounds = new Set();
-
-      Object.values(data).forEach((question) => {
-        if (question.round) uniqueRounds.add(question.round);
-      });
-
-      const roundsList = Array.from(uniqueRounds).sort((a, b) => a - b);
-      setRounds(roundsList);
-
-      // If no round is selected, select the first one
-      if (roundsList.length > 0 && !selectedRound) {
-        setSelectedRound(roundsList[0]);
+    const fetchQuestions = async () => {
+      if (!selectedContestId || !selectedRound) {
+        setQuestions([]);
+        setSelectedQuestionId("");
+        return;
+      }
+      try {
+        const { data, error } = await supabase
+          .from("questions")
+          .select("id, text, round")
+          .eq("contest_id", selectedContestId)
+          .eq("round", selectedRound);
+        if (error) throw error;
+        setQuestions(data || []);
+        // optionally pick the first question
+        if (data && data.length > 0) {
+          setSelectedQuestionId(data[0].id);
+        }
+      } catch (err) {
+        console.error("Error fetching questions:", err);
       }
     };
-
-    onValue(questionsRef, handleQuestions);
-
-    return () => {
-      off(questionsRef, "value", handleQuestions);
-    };
+    fetchQuestions();
   }, [selectedContestId, selectedRound]);
 
-  // Fetch questions based on selected contest and round
+  // 4) Whenever selectedQuestionId changes, fetch answers from the "answers" table
   useEffect(() => {
-    if (!selectedContestId || !selectedRound) {
-      setQuestions([]);
-      setSelectedQuestionId("");
-      return;
-    }
-
-    const db = getDatabase();
-    const questionsRef = ref(db, `questions/${selectedContestId}`);
-
-    const handleQuestions = (snapshot) => {
-      const data = snapshot.val() || {};
-      const filteredQuestions = Object.entries(data)
-        .filter(([id, question]) => question.round === selectedRound)
-        .map(([id, question]) => ({
-          id,
-          text: question.text,
-          options: question.options,
-        }));
-
-      setQuestions(filteredQuestions);
-
-      // If no question is selected, select the first one
-      if (filteredQuestions.length > 0 && !selectedQuestionId) {
-        setSelectedQuestionId(filteredQuestions[0].id);
+    const fetchSubmissions = async () => {
+      if (!selectedQuestionId) {
+        setSubmissions([]);
+        return;
+      }
+      setIsLoading(true);
+      try {
+        // We assume "answers" table has columns: participant_id, answer, timestamp
+        // If you store them differently, adapt the query
+        const { data, error } = await supabase
+          .from("answers")
+          .select("participant_id, answer, timestamp")
+          .eq("question_id", selectedQuestionId);
+        if (error) throw error;
+        setSubmissions(data || []);
+      } catch (err) {
+        console.error("Error fetching submissions:", err);
+      } finally {
+        setIsLoading(false);
       }
     };
+    fetchSubmissions();
+  }, [selectedQuestionId]);
 
-    onValue(questionsRef, handleQuestions);
-
-    return () => {
-      off(questionsRef, "value", handleQuestions);
-    };
-  }, [selectedContestId, selectedRound, selectedQuestionId]);
-
-  // Fetch submissions based on selected contest and question
-  useEffect(() => {
-    if (!selectedContestId || !selectedQuestionId) {
-      setSubmissions({});
-      return;
-    }
-
-    const db = getDatabase();
-    const submissionsRef = ref(
-      db,
-      `submissions/${selectedContestId}/${selectedQuestionId}`
-    );
-
-    const handleSubmissions = (snapshot) => {
-      const data = snapshot.val() || {};
-      setSubmissions(data);
-      setCurrentPage(1); // Reset to first page when submissions change
-    };
-
-    setIsLoading(true);
-    onValue(submissionsRef, handleSubmissions, (error) => {
-      console.error("Error fetching submissions:", error);
-      setIsLoading(false);
-    });
-
-    // Assuming data is fetched instantly; set isLoading to false
-    // Alternatively, use 'once' instead of 'on' if you don't need real-time updates
-    setIsLoading(false);
-
-    return () => {
-      off(submissionsRef, "value", handleSubmissions);
-    };
-  }, [selectedContestId, selectedQuestionId]);
-
-  // Pagination Logic
-  const totalSubmissions = Object.keys(submissions).length;
+  // 5) Pagination logic
+  const totalSubmissions = submissions.length;
   const totalPages = Math.ceil(totalSubmissions / ITEMS_PER_PAGE);
-  const paginatedSubmissions = Object.entries(submissions)
-    .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedSubmissions = submissions.slice(startIndex, endIndex);
 
   const handlePageChange = (direction) => {
     if (direction === "prev" && currentPage > 1) {
-      setCurrentPage(currentPage - 1);
+      setCurrentPage((p) => p - 1);
     } else if (direction === "next" && currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
+      setCurrentPage((p) => p + 1);
     }
   };
 
-  // Render Loading State
+  // 6) Optionally fetch participant’s user info from your "profiles" or "users" table
+  // For now, let’s do it inline, or you can create a separate component
+
+  const [usersCache, setUsersCache] = useState({}); // { participant_id: { username, ... } }
+
+  useEffect(() => {
+    const fetchAllUsers = async () => {
+      if (paginatedSubmissions.length === 0) return;
+      // Get unique participant_ids
+      const uniqueIds = [...new Set(paginatedSubmissions.map((sub) => sub.participant_id))];
+
+      // If you have a "participants" table that references user_id, you might do a join
+      // For simplicity, let's assume we have a "profiles" table with primary key = participant_id
+      // Or you might do a second step: get participant->userId, then user info from "users"
+
+      // Example direct approach:
+      const { data, error } = await supabase
+        .from("participants")
+        .select("id, user_id") // or username if you store it here
+        .in("id", uniqueIds);
+
+      if (error || !data) {
+        console.error("Error fetching participant -> user_id:", error);
+        return;
+      }
+
+      // Now fetch from "users" or "profiles" if you need the username
+      // E.g., if you store the username in "profiles" keyed by "id" = user_id
+      const userIds = data.map((p) => p.user_id);
+      const { data: profiles, error: profileError } = await supabase
+        .from("profiles")
+        .select("id, username")
+        .in("id", userIds);
+
+      if (profileError || !profiles) {
+        console.error("Error fetching profiles:", profileError);
+        return;
+      }
+
+      // Build a quick map of participant_id -> username
+      const newCache = {};
+      data.forEach((part) => {
+        const matchingProfile = profiles.find((pr) => pr.id === part.user_id);
+        newCache[part.id] = {
+          username: matchingProfile ? matchingProfile.username : "Unknown",
+        };
+      });
+      setUsersCache(newCache);
+    };
+
+    fetchAllUsers();
+  }, [paginatedSubmissions]);
+
   if (authLoading) {
     return <div className={styles.loading}>Loading user information...</div>;
   }
@@ -196,38 +199,45 @@ const SubmissionManagement = () => {
 
       {/* Contest Selection */}
       <div className={styles.selection}>
-        <label htmlFor="contestSelect" className={styles.label}>Select Contest:</label>
+        <label className={styles.label}>Select Contest:</label>
         <select
-          id="contestSelect"
           value={selectedContestId}
-          onChange={(e) => setSelectedContestId(e.target.value)}
+          onChange={(e) => {
+            setSelectedContestId(e.target.value);
+            setSelectedRound(null);
+            setSelectedQuestionId("");
+            setSubmissions([]);
+            setCurrentPage(1);
+          }}
           className={styles.select}
         >
-          {contests.length > 0 ? (
-            contests.map((contest) => (
-              <option key={contest.id} value={contest.id}>
-                {contest.name}
-              </option>
-            ))
-          ) : (
-            <option disabled>No Contests Available</option>
-          )}
+          <option value="">-- Choose a contest --</option>
+          {contests.map((contest) => (
+            <option key={contest.id} value={contest.id}>
+              {contest.name}
+            </option>
+          ))}
         </select>
       </div>
 
       {/* Round Selection */}
       {rounds.length > 0 && (
         <div className={styles.selection}>
-          <label htmlFor="roundSelect" className={styles.label}>Select Round:</label>
+          <label className={styles.label}>Select Round:</label>
           <select
-            id="roundSelect"
-            value={selectedRound}
-            onChange={(e) => setSelectedRound(parseInt(e.target.value, 10))}
+            value={selectedRound || ""}
+            onChange={(e) => {
+              const r = parseInt(e.target.value, 10);
+              setSelectedRound(r);
+              setSelectedQuestionId("");
+              setSubmissions([]);
+              setCurrentPage(1);
+            }}
             className={styles.select}
           >
-            {rounds.map((round) => (
-              <option key={round} value={round}>
-                Round {round}
+            {rounds.map((r) => (
+              <option key={r} value={r}>
+                Round {r}
               </option>
             ))}
           </select>
@@ -237,56 +247,63 @@ const SubmissionManagement = () => {
       {/* Question Selection */}
       {questions.length > 0 && (
         <div className={styles.selection}>
-          <label htmlFor="questionSelect" className={styles.label}>Select Question:</label>
+          <label className={styles.label}>Select Question:</label>
           <select
-            id="questionSelect"
             value={selectedQuestionId}
-            onChange={(e) => setSelectedQuestionId(e.target.value)}
+            onChange={(e) => {
+              setSelectedQuestionId(e.target.value);
+              setSubmissions([]);
+              setCurrentPage(1);
+            }}
             className={styles.select}
           >
-            {questions.map((question) => (
-              <option key={question.id} value={question.id}>
-                {question.text}
+            {questions.map((q) => (
+              <option key={q.id} value={q.id}>
+                {q.text}
               </option>
             ))}
           </select>
         </div>
       )}
 
-      {/* Submissions Display */}
+      {/* Submissions Table */}
       {selectedQuestionId && (
         <div className={styles.submissionsSection}>
           <h2 className={styles.submissionsTitle}>User Submissions</h2>
           {isLoading ? (
             <div className={styles.loading}>Loading submissions...</div>
-          ) : totalSubmissions > 0 ? (
+          ) : submissions.length === 0 ? (
+            <div className={styles.noSubmissions}>No submissions found for this question.</div>
+          ) : (
             <div>
               <table className={styles.table}>
                 <thead>
                   <tr>
-                    <th>Username</th>
+                    <th>Participant</th>
                     <th>Answer</th>
                     <th>Timestamp</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {paginatedSubmissions.map(([userId, submission]) => (
-                    <tr key={userId}>
-                      <td>{/* Fetch username from users node */}
-                        <UserName userId={userId} />
-                      </td>
-                      <td>{submission.answer}</td>
-                      <td>{new Date(submission.timestamp).toLocaleString()}</td>
-                    </tr>
-                  ))}
+                  {paginatedSubmissions.map((sub, idx) => {
+                    const userInfo = usersCache[sub.participant_id];
+                    const username = userInfo ? userInfo.username : "Loading...";
+                    return (
+                      <tr key={idx}>
+                        <td>{username}</td>
+                        <td>{sub.answer || "No answer"}</td>
+                        <td>{new Date(sub.timestamp).toLocaleString()}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
 
-              {/* Pagination Controls */}
+              {/* Pagination */}
               <div className={styles.pagination}>
                 <button
                   onClick={() => handlePageChange("prev")}
-                  disabled={currentPage === 1}
+                  disabled={currentPage <= 1}
                   className={styles.pageButton}
                 >
                   Previous
@@ -296,47 +313,18 @@ const SubmissionManagement = () => {
                 </span>
                 <button
                   onClick={() => handlePageChange("next")}
-                  disabled={currentPage === totalPages}
+                  disabled={currentPage >= totalPages}
                   className={styles.pageButton}
                 >
                   Next
                 </button>
               </div>
             </div>
-          ) : (
-            <div className={styles.noSubmissions}>No submissions found for this question.</div>
           )}
         </div>
       )}
     </div>
   );
-};
-
-// Component to fetch and display username based on userId
-const UserName = ({ userId }) => {
-  const [username, setUsername] = useState("");
-
-  useEffect(() => {
-    const db = getDatabase();
-    const userRef = ref(db, `users/${userId}`);
-
-    const handleUser = (snapshot) => {
-      const data = snapshot.val();
-      if (data && data.username) {
-        setUsername(data.username);
-      } else {
-        setUsername("Unknown User");
-      }
-    };
-
-    onValue(userRef, handleUser, { onlyOnce: true });
-
-    return () => {
-      off(userRef, "value", handleUser);
-    };
-  }, [userId]);
-
-  return <span>{username}</span>;
 };
 
 export default SubmissionManagement;

@@ -1,35 +1,44 @@
+// src/components/ContestManager/ContestManager.js
 import React, { useState, useEffect } from 'react';
-import { getDatabase, ref, onValue, update, push } from 'firebase/database';
+import { supabase } from '../../../supabase'; // your Supabase client
 import styles from './ContestManager.module.css';
 
 const ContestManager = () => {
   const [contests, setContests] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedContestId, setSelectedContestId] = useState(null);
+
+  // Our local form data
   const [contestData, setContestData] = useState({
     name: '',
     date: '',
-    price: '', // Added price field
-    currentRound: 1,
-    lobbyOpen: false,
+    price: '',
+    current_round: 1,
+    lobby_open: false,
     finished: false,
   });
 
+  // 1) On mount, fetch all contests
   useEffect(() => {
-    const db = getDatabase();
-    const contestsRef = ref(db, 'contests');
-    onValue(contestsRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        const contestsArray = Object.keys(data).map((id) => ({
-          id,
-          ...data[id],
-        }));
-        setContests(contestsArray);
+    const fetchContests = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('contests')
+          .select('*');
+
+        if (error) throw error;
+        if (data) {
+          setContests(data);
+        }
+      } catch (err) {
+        console.error("Error fetching contests:", err);
       }
-    });
+    };
+
+    fetchContests();
   }, []);
 
+  // 2) Handle input changes
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setContestData((prev) => ({
@@ -38,62 +47,123 @@ const ContestManager = () => {
     }));
   };
 
-  const handleCreateContest = () => {
-    const db = getDatabase();
-    const contestsRef = ref(db, 'contests');
-    const newContestRef = push(contestsRef);
-    const newContest = {
-      ...contestData,
-      currentRound: 1,
-      lobbyOpen: false,
-      finished: false,
-    };
-    update(newContestRef, newContest);
-    setContestData({
-      name: '',
-      date: '',
-      price: '', // Clear price field
-      currentRound: 1,
-      lobbyOpen: false,
-      finished: false,
-    });
+  // 3) Create a new contest
+  const handleCreateContest = async () => {
+    try {
+      const newContest = {
+        ...contestData,
+        current_round: 1,
+        lobby_open: false,
+        finished: false,
+      };
+
+      const { error } = await supabase
+        .from('contests')
+        .insert(newContest);
+
+      if (error) throw error;
+
+      // Refresh the list
+      const { data: refreshedData } = await supabase
+        .from('contests')
+        .select('*');
+
+      setContests(refreshedData || []);
+      // Reset form
+      setContestData({
+        name: '',
+        date: '',
+        price: '',
+        current_round: 1,
+        lobby_open: false,
+        finished: false,
+      });
+    } catch (err) {
+      console.error("Error creating contest:", err);
+    }
   };
 
+  // 4) Click “Edit” - load existing data into the form
   const handleEditContest = (contestId) => {
-    const contestToEdit = contests.find((contest) => contest.id === contestId);
+    const contestToEdit = contests.find((c) => c.id === contestId);
+    if (!contestToEdit) return;
+
     setSelectedContestId(contestId);
-    setContestData({ ...contestToEdit });
+
+    // Ensure our local state matches the DB column names
+    setContestData({
+      name: contestToEdit.name || '',
+      date: contestToEdit.date || '',
+      price: contestToEdit.price || '',
+      current_round: contestToEdit.current_round || 1,
+      lobby_open: contestToEdit.lobby_open || false,
+      finished: contestToEdit.finished || false,
+    });
+
     setIsEditing(true);
   };
 
-  const handleSaveChanges = () => {
-    const db = getDatabase();
-    const contestRef = ref(db, `contests/${selectedContestId}`);
-    update(contestRef, contestData)
-      .then(() => {
-        console.log('Contest updated successfully!');
-        setIsEditing(false);
-        setContestData({
-          name: '',
-          date: '',
-          price: '', // Clear price field
-          currentRound: 1,
-          lobbyOpen: false,
-          finished: false,
-        });
-        setSelectedContestId(null);
-      })
-      .catch((error) => {
-        console.error('Error updating contest:', error);
+  // 5) Save changes to existing contest
+  const handleSaveChanges = async () => {
+    try {
+      const { error } = await supabase
+        .from('contests')
+        .update(contestData)
+        .eq('id', selectedContestId);
+
+      if (error) throw error;
+
+      // Refresh the list
+      const { data: refreshedData } = await supabase
+        .from('contests')
+        .select('*');
+
+      setContests(refreshedData || []);
+
+      // Reset
+      setIsEditing(false);
+      setContestData({
+        name: '',
+        date: '',
+        price: '',
+        current_round: 1,
+        lobby_open: false,
+        finished: false,
       });
+      setSelectedContestId(null);
+    } catch (err) {
+      console.error("Error updating contest:", err);
+    }
   };
 
+  // 6) Form submit handler
   const handleSubmit = (e) => {
     e.preventDefault();
     if (isEditing) {
       handleSaveChanges();
     } else {
       handleCreateContest();
+    }
+  };
+
+  // 7) Optionally handle “Delete”
+  const handleDeleteContest = async (contestId) => {
+    try {
+      const { error } = await supabase
+        .from('contests')
+        .delete()
+        .eq('id', contestId);
+
+      if (error) throw error;
+
+      // Refresh
+      const { data: refreshedData } = await supabase
+        .from('contests')
+        .select('*');
+
+      setContests(refreshedData || []);
+    } catch (err) {
+      console.error("Error deleting contest:", err);
     }
   };
 
@@ -149,21 +219,22 @@ const ContestManager = () => {
           />
         </div>
 
-        {/* Show these fields only when editing a contest */}
+        {/* Show these fields only when editing */}
         {isEditing && (
           <>
             <div className={styles.formGroup}>
-              <label htmlFor="lobbyOpen" className={styles.label}>
+              <label htmlFor="lobby_open" className={styles.label}>
                 <input
                   type="checkbox"
-                  id="lobbyOpen"
-                  name="lobbyOpen"
-                  checked={contestData.lobbyOpen}
+                  id="lobby_open"
+                  name="lobby_open"
+                  checked={contestData.lobby_open}
                   onChange={handleInputChange}
                 />
                 Lobby Open
               </label>
             </div>
+
             <div className={styles.formGroup}>
               <label htmlFor="finished" className={styles.label}>
                 <input
@@ -176,15 +247,16 @@ const ContestManager = () => {
                 Finished
               </label>
             </div>
+
             <div className={styles.formGroup}>
-              <label htmlFor="currentRound" className={styles.label}>
+              <label htmlFor="current_round" className={styles.label}>
                 Current Round:
               </label>
               <input
                 type="number"
-                id="currentRound"
-                name="currentRound"
-                value={contestData.currentRound}
+                id="current_round"
+                name="current_round"
+                value={contestData.current_round}
                 onChange={handleInputChange}
                 className={styles.input}
                 min="1"
@@ -203,32 +275,37 @@ const ContestManager = () => {
           <tr>
             <th>Title</th>
             <th>Date</th>
-            <th>Price</th> {/* Added Price column */}
+            <th>Price</th>
             <th>Status</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          {contests.map((contest) => (
-            <tr key={contest.id}>
-              <td>{contest.name}</td>
-              <td>{contest.date}</td>
-              <td>{contest.price}</td> {/* Display the contest price */}
+          {contests.map((c) => (
+            <tr key={c.id}>
+              <td>{c.name}</td>
+              <td>{c.date}</td>
+              <td>{c.price}</td>
               <td>
-                {contest.finished
+                {c.finished
                   ? 'Completed'
-                  : contest.lobbyOpen
+                  : c.lobby_open
                   ? 'Active'
                   : 'Scheduled'}
               </td>
               <td>
                 <button
                   className={styles.actionButton}
-                  onClick={() => handleEditContest(contest.id)}
+                  onClick={() => handleEditContest(c.id)}
                 >
                   Edit
                 </button>
-                <button className={styles.actionButton}>Delete</button>
+                <button
+                  className={styles.actionButton}
+                  onClick={() => handleDeleteContest(c.id)}
+                >
+                  Delete
+                </button>
               </td>
             </tr>
           ))}

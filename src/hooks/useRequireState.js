@@ -9,7 +9,7 @@ import { useNavigate, useLocation } from "react-router-dom";
  * @param {string} redirectPath - Path to redirect to if required state is missing
  * @returns {Object} - The state object
  */
-function useRequireState(requiredKeys = [], redirectPath = "/login") {
+function useRequireState(requiredKeys = [], redirectPath = "/") {
   const location = useLocation();
   const navigate = useNavigate();
   const state = location.state || {};
