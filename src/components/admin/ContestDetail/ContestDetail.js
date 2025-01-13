@@ -1,13 +1,13 @@
-// src/pages/Admin/ContestDetail.js
+// src/components/admin/ContestDetail/ContestDetail.js
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { supabase } from "../../supabase"; // or wherever your supabase client is
-import styles from "./ContestDetail.module.css"; // Example CSS module for dark styling
+import { supabase } from "../../../supabase"; // adjust import path
+import styles from "./ContestDetail.module.css";
 
 function ContestDetail() {
-  const { id: contestId } = useParams(); // contestId from the route
+  const { id } = useParams(); // The contest ID from /admin/:id
   const [contest, setContest] = useState(null);
-  const [loadingContest, setLoadingContest] = useState(true);
+  const [loading, setLoading] = useState(true);
 
   // Toggles
   const [lobbyOpen, setLobbyOpen] = useState(false);
@@ -16,26 +16,23 @@ function ContestDetail() {
 
   // Questions
   const [questions, setQuestions] = useState([]);
-  const [newQuestionText, setNewQuestionText] = useState("");
-  const [newQuestionOptions, setNewQuestionOptions] = useState(["", ""]);
-  const [newQuestionRound, setNewQuestionRound] = useState(1);
+  const [newQText, setNewQText] = useState("");
+  const [newQOptions, setNewQOptions] = useState(["", ""]);
+  const [newQRound, setNewQRound] = useState(1);
 
-  // For the pie chart (submission distribution)
-  const [pieData, setPieData] = useState([]); // e.g. [{ option: "A", count: 10 }, { option: "B", count: 5 }]
+  // Pie Data (submissions distribution)
+  const [pieData, setPieData] = useState([]);
 
-  // 1) Fetch the contest info
+  // 1) Fetch Contest
   useEffect(() => {
-    const fetchContest = async () => {
+    async function fetchContest() {
       try {
         const { data, error } = await supabase
           .from("contests")
           .select("*")
-          .eq("id", contestId)
+          .eq("id", id)
           .single();
-
-        if (error || !data) {
-          throw error || new Error("Contest not found");
-        }
+        if (error || !data) throw error || new Error("Contest not found.");
         setContest(data);
         setLobbyOpen(data.lobby_open);
         setSubmissionsOpen(data.submission_open);
@@ -43,61 +40,139 @@ function ContestDetail() {
       } catch (err) {
         console.error("Error fetching contest:", err);
       } finally {
-        setLoadingContest(false);
+        setLoading(false);
       }
-    };
+    }
     fetchContest();
-  }, [contestId]);
+  }, [id]);
 
-  // 2) Fetch questions for this contest
+  // 2) Fetch questions
   useEffect(() => {
-    const fetchQuestions = async () => {
-      if (!contestId) return;
+    async function fetchQuestions() {
       try {
         const { data, error } = await supabase
           .from("questions")
           .select("*")
-          .eq("contest_id", contestId)
+          .eq("contest_id", id)
           .order("round", { ascending: true });
-
         if (error) throw error;
         setQuestions(data || []);
       } catch (err) {
         console.error("Error fetching questions:", err);
       }
-    };
+    }
     fetchQuestions();
-  }, [contestId]);
+  }, [id]);
 
-  // 3) (Optional) Poll or subscribe for “pieData” (submission distribution)
-  // For demonstration, let's do a simple fetch on mount
-  // and add a refresh button. You could also poll every X seconds if you like.
-  const fetchPieData = async () => {
+  // 3) Toggle Lobby
+  const handleToggleLobby = async () => {
+    const updated = !lobbyOpen;
     try {
-      // EXAMPLE: We'll assume we have an "answers" table with:
-      //  question_id, answer, count or we sum up
-      // We'll just gather the last question or something.
-      // For real usage, you'd adapt to your actual structure or a specific question
-      if (questions.length === 0) return;
-      const lastQuestionId = questions[questions.length - 1].id;
+      const { error } = await supabase
+        .from("contests")
+        .update({ lobby_open: updated })
+        .eq("id", id);
+      if (error) throw error;
+      setLobbyOpen(updated);
+    } catch (err) {
+      console.error("Error toggling lobby:", err);
+    }
+  };
 
-      const { data: answers, error } = await supabase
+  // 4) Toggle Submissions
+  const handleToggleSubmissions = async () => {
+    const updated = !submissionsOpen;
+    try {
+      const { error } = await supabase
+        .from("contests")
+        .update({ submission_open: updated })
+        .eq("id", id);
+      if (error) throw error;
+      setSubmissionsOpen(updated);
+    } catch (err) {
+      console.error("Error toggling submissions:", err);
+    }
+  };
+
+  // 5) Next Round
+  const handleNextRound = async () => {
+    try {
+      const newRound = currentRound + 1;
+      const { error } = await supabase
+        .from("contests")
+        .update({ current_round: newRound })
+        .eq("id", id);
+      if (error) throw error;
+      setCurrentRound(newRound);
+    } catch (err) {
+      console.error("Error updating round:", err);
+    }
+  };
+
+  // 6) Add Question
+  const handleAddQuestion = async () => {
+    if (!newQText.trim()) {
+      alert("Question text cannot be empty.");
+      return;
+    }
+    const filledOptions = newQOptions.filter((opt) => opt.trim() !== "");
+    if (filledOptions.length < 2) {
+      alert("Please provide at least 2 options.");
+      return;
+    }
+
+    try {
+      const { error } = await supabase.from("questions").insert({
+        contest_id: id,
+        text: newQText,
+        options: filledOptions,
+        round: newQRound,
+        correctAnswer: null,
+      });
+      if (error) throw error;
+
+      // add to local state
+      setQuestions((prev) => [
+        ...prev,
+        {
+          id: Math.random().toString(36).substr(2, 9),
+          text: newQText,
+          options: filledOptions,
+          round: newQRound,
+          contest_id: id,
+        },
+      ]);
+
+      // reset
+      setNewQText("");
+      setNewQOptions(["", ""]);
+      setNewQRound(1);
+    } catch (err) {
+      console.error("Error adding question:", err);
+    }
+  };
+
+  // 7) Pie Chart data
+  const fetchPieData = async () => {
+    if (questions.length === 0) {
+      setPieData([]);
+      return;
+    }
+    // e.g. look at last question
+    const lastQuestionId = questions[questions.length - 1].id;
+    try {
+      const { data, error } = await supabase
         .from("answers")
         .select("answer")
         .eq("question_id", lastQuestionId);
       if (error) throw error;
 
-      // Tally up counts by answer
       const counts = {};
-      answers.forEach((row) => {
+      data.forEach((row) => {
         counts[row.answer] = (counts[row.answer] || 0) + 1;
       });
-      // Convert to array
-      const distribution = Object.entries(counts).map(([option, count]) => ({
-        option,
-        count,
-      }));
-      setPieData(distribution);
+      const dist = Object.entries(counts).map(([option, count]) => ({ option, count }));
+      setPieData(dist);
     } catch (err) {
       console.error("Error fetching pie data:", err);
     }
@@ -108,244 +183,117 @@ function ContestDetail() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [questions]);
 
-  // ============ Contest Toggles ============
-
-  const handleToggleLobby = async () => {
-    try {
-      const { error } = await supabase
-        .from("contests")
-        .update({ lobby_open: !lobbyOpen })
-        .eq("id", contestId);
-      if (error) throw error;
-      setLobbyOpen((prev) => !prev);
-    } catch (err) {
-      console.error("Error toggling lobby:", err);
-    }
-  };
-
-  const handleToggleSubmissions = async () => {
-    try {
-      const { error } = await supabase
-        .from("contests")
-        .update({ submission_open: !submissionsOpen })
-        .eq("id", contestId);
-      if (error) throw error;
-      setSubmissionsOpen((prev) => !prev);
-    } catch (err) {
-      console.error("Error toggling submissions:", err);
-    }
-  };
-
-  const handleNextRound = async () => {
-    try {
-      const newRound = currentRound + 1;
-      const { error } = await supabase
-        .from("contests")
-        .update({ current_round: newRound })
-        .eq("id", contestId);
-      if (error) throw error;
-      setCurrentRound(newRound);
-    } catch (err) {
-      console.error("Error incrementing round:", err);
-    }
-  };
-
-  // ============ Questions Management ============
-
-  const handleAddQuestion = async () => {
-    if (!newQuestionText.trim()) {
-      alert("Question text cannot be empty.");
-      return;
-    }
-    // Filter out empty options
-    const filledOptions = newQuestionOptions.filter((opt) => opt.trim() !== "");
-    if (filledOptions.length < 2) {
-      alert("Please provide at least 2 options.");
-      return;
-    }
-
-    try {
-      const { error } = await supabase.from("questions").insert({
-        contest_id: contestId,
-        text: newQuestionText,
-        options: filledOptions,
-        round: newQuestionRound,
-        correctAnswer: null,
-      });
-
-      if (error) throw error;
-
-      // Refresh question list
-      setQuestions((prev) => [
-        ...prev,
-        {
-          // we can’t get the ID automatically from the insert without returning data,
-          // so we’ll do a manual fetch or just approximate:
-          id: Math.random().toString(36).substr(2, 9),
-          contest_id: contestId,
-          text: newQuestionText,
-          options: filledOptions,
-          round: newQuestionRound,
-          correctAnswer: null,
-        },
-      ]);
-
-      // Reset fields
-      setNewQuestionText("");
-      setNewQuestionOptions(["", ""]);
-      setNewQuestionRound(1);
-    } catch (err) {
-      console.error("Error adding question:", err);
-      alert("Could not add question.");
-    }
-  };
-
-  // ============ Simple Pie Chart (Pure SVG Example) ============
-  // We'll create a small helper to render a pie chart from `pieData`.
-  // This is a minimal approach. For a robust chart, you'd likely use chart.js or recharts.
-
-  const PieChart = ({ data = [] }) => {
-    // Sum up total
+  // Minimal Pie
+  const PieChart = ({ data }) => {
     const total = data.reduce((sum, d) => sum + d.count, 0);
     if (total === 0) {
-      return <div className={styles.chartContainer}>No data yet.</div>;
+      return <div className={styles.noData}>No data yet.</div>;
     }
-
-    // We'll do a simplistic “donut” approach
     let currentAngle = 0;
     return (
-      <svg width="200" height="200" viewBox="0 0 32 32" className={styles.chartContainer}>
+      <svg width="200" height="200" viewBox="0 0 32 32" className={styles.pieSvg}>
         {data.map((d, i) => {
           const sliceAngle = (d.count / total) * 360;
           const largeArc = sliceAngle > 180 ? 1 : 0;
-
-          // Convert angles to radians
-          const startRadians = (Math.PI * (currentAngle - 90)) / 180;
-          const endRadians = (Math.PI * (currentAngle + sliceAngle - 90)) / 180;
-
-          // Start coords
-          const x1 = 16 + 16 * Math.cos(startRadians);
-          const y1 = 16 + 16 * Math.sin(startRadians);
-          // End coords
-          const x2 = 16 + 16 * Math.cos(endRadians);
-          const y2 = 16 + 16 * Math.sin(endRadians);
-
-          // color pick (just random or from a small palette)
-          const color = ["#00bfa6", "#ffcc00", "#ff7f7f", "#66ccff", "#cc66ff"][i % 5];
-
-          const pathData = [
-            `M16,16 L${x1},${y1} A16,16 0 ${largeArc} 1 ${x2},${y2} z`,
-          ].join(" ");
+          const start = ((currentAngle - 90) * Math.PI) / 180;
+          const end = ((currentAngle + sliceAngle - 90) * Math.PI) / 180;
+          const x1 = 16 + 16 * Math.cos(start);
+          const y1 = 16 + 16 * Math.sin(start);
+          const x2 = 16 + 16 * Math.cos(end);
+          const y2 = 16 + 16 * Math.sin(end);
+          const pathData = `M16 16 L ${x1} ${y1} A 16 16 0 ${largeArc} 1 ${x2} ${y2} z`;
+          const color = ["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0"][i % 4];
 
           currentAngle += sliceAngle;
-          return <path d={pathData} fill={color} key={i} />;
+          return <path key={i} d={pathData} fill={color} />;
         })}
-        {/* White circle in the middle to make it a donut */}
         <circle cx="16" cy="16" r="8" fill="#121212" />
       </svg>
     );
   };
 
-  if (loadingContest) return <div className={styles.loading}>Loading Contest...</div>;
+  if (loading) return <div className={styles.loading}>Loading Contest...</div>;
+  if (!contest) return <div className={styles.error}>Contest not found.</div>;
 
-  if (!contest) {
-    return <div className={styles.error}>Contest not found.</div>;
-  }
-
-  // ============ Render UI ============
   return (
-    <div className={styles.contestDetail}>
-      <h1 className={styles.title}>{contest.name || "Contest Detail"}</h1>
+    <div className={styles.detailContainer}>
+      <h2 className={styles.detailTitle}>{contest.name}</h2>
+      <p className={styles.statusText}>
+        Round {currentRound} | Lobby: {lobbyOpen ? "Open" : "Closed"} | Submissions:{" "}
+        {submissionsOpen ? "Open" : "Closed"}
+      </p>
 
-      <div className={styles.togglesRow}>
-        <div className={styles.toggleItem}>
-          <span>Lobby Open:</span>
-          <button onClick={handleToggleLobby} className={styles.toggleButton}>
-            {lobbyOpen ? "Yes (Click to Close)" : "No (Click to Open)"}
-          </button>
-        </div>
-        <div className={styles.toggleItem}>
-          <span>Submissions Open:</span>
-          <button onClick={handleToggleSubmissions} className={styles.toggleButton}>
-            {submissionsOpen ? "Yes (Click to Close)" : "No (Click to Open)"}
-          </button>
-        </div>
-        <div className={styles.toggleItem}>
-          <span>Current Round: {currentRound}</span>
-          <button onClick={handleNextRound} className={styles.toggleButton}>
-            Next Round
-          </button>
-        </div>
+      <div className={styles.buttonRow}>
+        <button onClick={handleToggleLobby}>
+          {lobbyOpen ? "Close Lobby" : "Open Lobby"}
+        </button>
+        <button onClick={handleToggleSubmissions}>
+          {submissionsOpen ? "Close Submissions" : "Open Submissions"}
+        </button>
+        <button onClick={handleNextRound}>Next Round</button>
+        <button onClick={fetchPieData}>Refresh Pie</button>
       </div>
 
-      {/* Questions Section */}
-      <section className={styles.questionsSection}>
-        <h2>Questions</h2>
-        <div className={styles.newQuestionForm}>
-          <label>Question Text:</label>
-          <input
-            type="text"
-            value={newQuestionText}
-            onChange={(e) => setNewQuestionText(e.target.value)}
-            className={styles.input}
-          />
+      {/* Create Question */}
+      <div className={styles.questionBox}>
+        <h3>Create New Question</h3>
+        <input
+          type="text"
+          value={newQText}
+          onChange={(e) => setNewQText(e.target.value)}
+          placeholder="Question text"
+          className={styles.input}
+        />
+        <div className={styles.roundRow}>
           <label>Round:</label>
           <input
             type="number"
             min={1}
-            value={newQuestionRound}
-            onChange={(e) => setNewQuestionRound(parseInt(e.target.value, 10))}
-            className={styles.input}
+            value={newQRound}
+            onChange={(e) => setNewQRound(parseInt(e.target.value, 10))}
           />
-          <label>Options:</label>
-          {newQuestionOptions.map((opt, idx) => (
+        </div>
+        <div className={styles.optionsBlock}>
+          {newQOptions.map((opt, idx) => (
             <input
               key={idx}
               type="text"
               value={opt}
               onChange={(e) => {
-                const copy = [...newQuestionOptions];
+                const copy = [...newQOptions];
                 copy[idx] = e.target.value;
-                setNewQuestionOptions(copy);
+                setNewQOptions(copy);
               }}
               placeholder={`Option ${idx + 1}`}
-              className={styles.input}
             />
           ))}
-          {/* Add a new option if you want more than 2 */}
-          <button
-            onClick={() => setNewQuestionOptions((prev) => [...prev, ""])}
-            className={styles.addOptionButton}
-          >
-            + Add Option
-          </button>
-
-          <button onClick={handleAddQuestion} className={styles.submitButton}>
-            Add Question
-          </button>
+          <button onClick={() => setNewQOptions((prev) => [...prev, ""])}>+ Add Option</button>
         </div>
+        <button onClick={handleAddQuestion}>Add Question</button>
+      </div>
 
-        <div className={styles.questionsList}>
-          {questions.map((q) => (
+      {/* Existing Questions */}
+      <div className={styles.questionsList}>
+        <h3>Existing Questions</h3>
+        {questions.length === 0 ? (
+          <p>No questions yet.</p>
+        ) : (
+          questions.map((q) => (
             <div key={q.id} className={styles.questionItem}>
               <p>
-                <strong>Round {q.round}:</strong> {q.text}
+                <strong>Round {q.round}</strong>: {q.text}
               </p>
-              <p>Options: {q.options?.join(", ")}</p>
-              <p>Correct Answer: {q.correctAnswer || "Not Set"}</p>
+              <p className={styles.smallText}>Options: {q.options?.join(", ")}</p>
             </div>
-          ))}
-        </div>
-      </section>
+          ))
+        )}
+      </div>
 
-      {/* Pie Chart Section */}
-      <section className={styles.chartSection}>
-        <h2>Submission Distribution</h2>
+      {/* Pie Chart */}
+      <div className={styles.pieBox}>
+        <h3>Submission Distribution (Last Question)</h3>
         <PieChart data={pieData} />
-        <button onClick={fetchPieData} className={styles.refreshButton}>
-          Refresh
-        </button>
-      </section>
+      </div>
     </div>
   );
 }

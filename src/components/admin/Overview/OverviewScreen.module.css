@@ -1,0 +1,75 @@
+/* src/components/admin/Overview/OverviewScreen.module.css */
+.overviewContainer {
+    color: #fff;
+  }
+  
+  .heading {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  .createArea {
+    background-color: #2a2a2a;
+    padding: 1rem;
+    margin-bottom: 2rem;
+    border-radius: 8px;
+  }
+  
+  .formRow {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+  
+  .input {
+    flex: 1;
+    padding: 8px;
+    border: none;
+    border-radius: 4px;
+    background-color: #3a3a3c;
+    color: #fff;
+  }
+  
+  .button {
+    background-color: #00bfa6;
+    color: #121212;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .button:hover {
+    background-color: #00dbb9;
+  }
+  
+  .grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  }
+  
+  .card {
+    background-color: #2a2a2a;
+    padding: 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  .card:hover {
+    background-color: #39393b;
+  }
+  
+  .cardInfo {
+    font-size: 0.9rem;
+    color: #ccc;
+    margin: 4px 0;
+  }
+  
+  .loading,
+  .error {
+    margin: 1rem 0;
+    color: #ccc;
+  }
+  

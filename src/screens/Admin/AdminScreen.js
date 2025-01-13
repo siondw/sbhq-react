@@ -1,14 +1,20 @@
-import React from 'react';
-import AdminDashboard from '../../components/admin/Dashboard/AdminDashboard';
+// src/screens/Admin/AdminScreen.js
+import React from "react";
+import { Outlet } from "react-router-dom";
+import styles from "./AdminScreen.module.css";
 
-const AdminScreen = () => {
-  // You can include authentication checks or other logic specific to the screen here
-
+function AdminScreen() {
   return (
-    <div className="admin-dashboard-screen">
-      <AdminDashboard />
+    <div className={styles.adminContainer}>
+      {/* 
+        If you want a Sidebar or header, put it here.
+        e.g. <Sidebar /> 
+      */}
+      <div className={styles.contentArea}>
+        <Outlet />
+      </div>
     </div>
   );
-};
+}
 
 export default AdminScreen;
