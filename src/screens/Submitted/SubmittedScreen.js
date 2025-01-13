@@ -1,92 +1,169 @@
-import React, { useState, useEffect } from 'react';
-import Header from '../../components/Header/Header';  
-import MainText from '../../components/MainText/MainText';
-import styles from './SubmittedScreen.module.css';  
-import ballGif from '../../assets/ball.gif';  
-import { useNavigate, useLocation } from 'react-router-dom';
-import { getDatabase, ref, onValue, off } from "firebase/database";
+import React, { useState, useEffect } from "react";
+import Header from "../../components/Header/Header";
+import MainText from "../../components/MainText/MainText";
+import styles from "./SubmittedScreen.module.css";
+import ballGif from "../../assets/ball.gif";
+import { useNavigate, useLocation } from "react-router-dom";
+import { supabase } from "../../supabase";
 
 function SubmittedScreen() {
-    const navigate = useNavigate();
-    const location = useLocation();
-    
-    // Get the full contest object from state
-    const { contest, questionId, userId, userAnswer } = location.state || {};
-    const contestId = contest?.id;
+  console.log("SubmittedScreen mounted with raw state:", location.state);
+  
+  const navigate = useNavigate();
+  const location = useLocation();
 
-    const [correctAnswer, setCorrectAnswer] = useState(null);
-    const [statusChecked, setStatusChecked] = useState(false);
-    const [error, setError] = useState(null);
+  const { contest, questionId, selectedAnswer, userId } = location.state || {};
+  
+  console.log("Destructured state values:", {
+    contest,
+    questionId,
+    selectedAnswer,
+    userId,
+    hasState: !!location.state
+  });
 
-    useEffect(() => {
-        if (!contestId || !questionId || !userId) {
-            // Invalid state, redirect to login page
-            navigate('/login', { replace: true, state: { message: 'Invalid submission data.' } });
-            return;
+  useEffect(() => {
+    if (!location.state) {
+      console.error("No state provided to SubmittedScreen");
+      navigate("/login");
+      return;
+    }
+
+    if (!contest?.id || !questionId || !selectedAnswer) {
+      console.error("Missing required state:", {
+        contestId: contest?.id,
+        questionId,
+        selectedAnswer
+      });
+      navigate("/login");
+      return;
+    }
+  }, [location.state, contest, questionId, selectedAnswer, navigate]);
+
+  const contestId = contest?.id;
+
+  console.log("SubmittedScreen state:", {
+    contestId,
+    questionId,
+    selectedAnswer,
+    locationState: location.state,
+  });
+
+  const [correctAnswer, setCorrectAnswer] = useState(null);
+  const [statusChecked, setStatusChecked] = useState(false);
+  const [error, setError] = useState(null);
+  const [hasNavigated, setHasNavigated] = useState(false);
+
+  // Validate required state and redirect if missing
+  useEffect(() => {
+    console.log("First useEffect running - validation check");
+    if (!contestId || !questionId || selectedAnswer === undefined) {
+      console.log("Missing required data in location.state. Redirecting to /login...");
+      navigate("/login", {
+        replace: true,
+        state: { message: "Invalid submission data." },
+      });
+    }
+  }, [contestId, questionId, selectedAnswer, navigate]);
+
+  // Initial fetch for the correct answer
+  useEffect(() => {
+    if (!questionId) return;
+
+    const fetchCorrectAnswer = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("questions")
+          .select("correct_option")
+          .eq("id", questionId)
+          .single();
+
+        if (error) throw error;
+
+        if (data?.correct_option !== null) {
+          setCorrectAnswer(data.correct_option);
+          setStatusChecked(true);
         }
-    }, [contestId, questionId, userId, navigate]);
+      } catch (err) {
+        console.error("Error fetching correct answer:", err.message);
+        setError("Error fetching correct answer.");
+      }
+    };
 
-    useEffect(() => {
-        if (!userAnswer) {
-            // Invalid state, redirect to eliminated page
-            navigate('/eliminated', { replace: true, state: { message: 'Invalid submission data.' } });
-            return;
+    fetchCorrectAnswer();
+  }, [questionId]);
+
+  // Real-time listener for the correct_option field
+  useEffect(() => {
+    if (!questionId) return;
+
+    const channel = supabase
+      .channel(`question-${questionId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "questions",
+          filter: `id=eq.${questionId}`,
+        },
+        (payload) => {
+          const updatedCorrectOption = payload.new.correct_option;
+          console.log("Real-time update received. New correct_option:", updatedCorrectOption);
+
+          if (updatedCorrectOption !== null) {
+            setCorrectAnswer(updatedCorrectOption);
+            setStatusChecked(true);
+          }
         }
+      )
+      .subscribe();
 
-        const db = getDatabase();
-        const correctAnswerRef = ref(db, `questions/${contestId}/${questionId}/correctAnswer`);
+    return () => {
+      console.log("Unsubscribing from real-time updates");
+      supabase.removeChannel(channel);
+    };
+  }, [questionId]);
 
-        const handleCorrectAnswer = (snapshot) => {
-            const correct = snapshot.val();
-            if (correct !== null) { // If correctAnswer is set
-                setCorrectAnswer(correct);
-                setStatusChecked(true);
-            }
-        };
+  // Evaluate the user's answer when the correct answer is set
+  useEffect(() => {
+    if (statusChecked && !hasNavigated) {
+      console.log("Evaluating answer...");
+      console.log("User answer:", selectedAnswer, "Correct answer:", correctAnswer);
 
-        onValue(correctAnswerRef, handleCorrectAnswer, (error) => {
-            console.error('Error fetching correct answer:', error);
-            setError("Error fetching correct answer.");
-        });
+      if (selectedAnswer === correctAnswer) {
+        console.log("Answer is correct. Navigating to /correct...");
+        setHasNavigated(true);
+        navigate("/correct", { replace: true, state: { contest, questionId } });
+      } else {
+        console.log("Answer is incorrect. Navigating to /eliminated...");
+        setHasNavigated(true);
+        navigate("/eliminated", { replace: true, state: { contest, questionId } });
+      }
+    }
+  }, [statusChecked, selectedAnswer, correctAnswer, navigate, contest, questionId, hasNavigated]);
 
-        // Cleanup listener on unmount
-        return () => {
-            off(correctAnswerRef, 'value', handleCorrectAnswer);
-        };
-    }, [contestId, questionId, userId, userAnswer, navigate]);
+  return (
+    <div className={styles.submittedScreen}>
+      <div className={styles.headerContainer}>
+        <Header />
+      </div>
+      <div className={styles.mainTextContainer}>
+        <MainText header="Submitted!" subheader="Awaiting Results..." />
+      </div>
+      <div className={styles.gifContainer}>
+        <img
+          src={ballGif}
+          alt="Awaiting results"
+          className={styles.ballGif}
+          style={{ width: 250, height: 250 }}
+        />
+      </div>
 
-    useEffect(() => {
-        if (statusChecked) {
-            if (userAnswer === correctAnswer) {
-                // Pass the full contest object when navigating to CorrectScreen
-                navigate('/correct', { replace: true, state: { contest, questionId } });
-            } else {
-                // Similarly, pass necessary state when navigating to EliminatedScreen
-                navigate('/eliminated', { replace: true, state: { contest, questionId } });
-            }
-        }
-    }, [statusChecked, userAnswer, correctAnswer, navigate, contest, questionId]);
-
-    return (
-        <div className={styles.submittedScreen}>
-            <div className={styles.headerContainer}>
-                <Header />
-            </div>
-            <div className={styles.mainTextContainer}>
-                <MainText 
-                    header="Submitted!" 
-                    subheader="Awaiting Results..."
-                />
-            </div>
-            <div className={styles.gifContainer}>
-                <img src={ballGif} alt="Awaiting results" className={styles.ballGif} style={{ width: 250, height: 250 }} /> 
-            </div>
-
-
-            {/* Display error message if any */}
-            {error && <p className={styles.error}>{error}</p>}
-        </div>
-    );
+      {/* Display error message if any */}
+      {error && <p className={styles.error}>{error}</p>}
+    </div>
+  );
 }
 
 export default SubmittedScreen;

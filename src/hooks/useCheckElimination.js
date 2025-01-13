@@ -1,9 +1,7 @@
-// src/hooks/useCheckElimination.js
-
 import { useEffect } from "react";
-import { getDatabase, ref, onValue, off } from "firebase/database";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { supabase } from "../supabase";
 
 const useCheckElimination = (contestId, userId) => {
   const navigate = useNavigate();
@@ -12,23 +10,45 @@ const useCheckElimination = (contestId, userId) => {
   useEffect(() => {
     if (!contestId || !userId) return;
 
-    const db = getDatabase();
-    const participantRef = ref(db, `contests/${contestId}/participants/${userId}/active`);
+    let subscription;
 
-    const handleParticipantStatus = (snapshot) => {
-      const isActive = snapshot.val();
-      if (isActive === false) {
-        navigate("/eliminated"); // Redirect to EliminatedScreen
+    const checkElimination = async () => {
+      try {
+        // Fetch participant's active status initially
+        const { data, error } = await supabase
+          .from("participants")
+          .select("active")
+          .eq("contest_id", contestId)
+          .eq("user_id", userId)
+          .single();
+
+        if (error) throw error;
+
+        if (data?.active === false) {
+          navigate("/eliminated"); // Redirect to EliminatedScreen
+        }
+
+        // Subscribe to changes in the participant's active status
+        subscription = supabase
+          .from(`participants:contest_id=eq.${contestId}`)
+          .on("UPDATE", (payload) => {
+            if (payload.new.user_id === userId && payload.new.active === false) {
+              navigate("/eliminated"); // Redirect to EliminatedScreen
+            }
+          })
+          .subscribe();
+      } catch (err) {
+        console.error("Error checking participant status:", err.message);
       }
     };
 
-    onValue(participantRef, handleParticipantStatus, (error) => {
-      console.error("Error checking participant status:", error);
-    });
+    checkElimination();
 
-    // Cleanup listener on unmount
+    // Cleanup subscription on unmount
     return () => {
-      off(participantRef, "value", handleParticipantStatus);
+      if (subscription) {
+        supabase.removeSubscription(subscription);
+      }
     };
   }, [contestId, userId, navigate, user]);
 
