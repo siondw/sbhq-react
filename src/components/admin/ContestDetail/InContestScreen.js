@@ -1,13 +1,13 @@
 // src/components/admin/ContestDetail/InContestScreen.js
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom"; // Add useNavigate
 import styles from "./InContestScreen.module.css";
 
 // Fix relative paths to components
 import SubheaderToggles from "../InContest/SubheaderToggles/SubheaderToggles";
 import StatCard from "../InContest/StatCard/StatCard";
 import CurrentQuestionView from "../InContest/CurrentQuestionView/CurrentQuestionView";
-import QuestionsList from "../InContest/QuestionList/QuestionsList"; // Fixed: QuestionList -> QuestionsList
+import QuestionsList from "../InContest/QuestionList/QuestionList"; // Fixed: QuestionList -> QuestionsList
 import QuestionModal from "../InContest/QuestionModal/QuestionModal";
 
 // Fix supabase import path
@@ -15,6 +15,7 @@ import { supabase } from "../../../supabase";
 
 function InContestScreen() {
   const { id: contestId } = useParams();
+  const navigate = useNavigate(); // Add this near other hooks
 
   // Contest data
   const [contest, setContest] = useState(null);
@@ -202,9 +203,14 @@ function InContestScreen() {
           <StatCard
             value={currentRound}
             label="ROUND"
-            // maybe do something fancy on hover
           />
-          {/* More cards if needed */}
+          <div className={styles.leftColumnSpacer}></div>
+          <button 
+            className={styles.backLink}
+            onClick={() => navigate('/admin')}
+          >
+            ← Back to Contests
+          </button>
         </div>
 
         {/* Center area: Current question view */}
@@ -241,6 +247,14 @@ function InContestScreen() {
       {/* Possibly a floating + button if you prefer */}
       <button className={styles.fab} onClick={openCreateQuestionModal}>
         +
+      </button>
+
+      {/* Add back button before closing wrapper div */}
+      <button 
+        className={styles.backButton}
+        onClick={() => navigate('/admin')}
+      >
+        ← Back to Contests
       </button>
     </div>
   );

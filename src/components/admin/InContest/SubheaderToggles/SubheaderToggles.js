@@ -16,19 +16,31 @@ function SubheaderToggles({
     <div className={styles.subheader}>
       <div className={styles.toggleItem}>
         <span>Lobby:</span>
-        <button onClick={onToggleLobby} className={styles.toggleButton}>
+        <button 
+          onClick={onToggleLobby} 
+          className={styles.toggleButton}
+          data-active={lobbyOpen}
+        >
           {lobbyOpen ? "ON" : "OFF"}
         </button>
       </div>
       <div className={styles.toggleItem}>
         <span>Submissions:</span>
-        <button onClick={onToggleSubmission} className={styles.toggleButton}>
+        <button 
+          onClick={onToggleSubmission} 
+          className={styles.toggleButton}
+          data-submissions={submissionOpen}
+        >
           {submissionOpen ? "ON" : "OFF"}
         </button>
       </div>
       <div className={styles.toggleItem}>
         <span>Finished:</span>
-        <button onClick={onToggleFinished} className={styles.toggleButton}>
+        <button 
+          onClick={onToggleFinished} 
+          className={styles.toggleButton}
+          data-finished={finished}
+        >
           {finished ? "ON" : "OFF"}
         </button>
       </div>

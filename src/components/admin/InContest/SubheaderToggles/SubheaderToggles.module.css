@@ -1,0 +1,67 @@
+/* src/components/admin/InContest/SubheaderToggles/SubheaderToggles.module.css */
+
+.subheader {
+    display: flex;
+    align-items: center;
+    background-color: #fff;
+    border-bottom: 1px solid #ddd;
+    padding: 0.75rem 2rem;
+    gap: 2rem;
+    font-size: 0.95rem;
+    color: #333;
+  }
+  
+  .toggleItem {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .toggleButton {
+    background-color: #999;
+    color: #fff;
+    padding: 4px 8px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    min-width: 45px;
+  }
+  
+  .toggleButton[data-active="true"] {
+    background-color: #4CAF50;  /* Green for active lobby */
+  }
+  
+  .toggleButton[data-submissions="true"] {
+    background-color: #2196F3;  /* Blue for active submissions */
+  }
+  
+  .toggleButton[data-finished="true"] {
+    background-color: #9C27B0;  /* Purple for finished state */
+  }
+  
+  .toggleButton:hover {
+    background-color: #777;
+  }
+  
+  .roundContainer {
+    margin-left: auto; /* push it to the right end */
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .roundContainer button {
+    background-color: #ccc;
+    border: none;
+    border-radius: 4px;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    color: #333;
+    transition: background-color 0.2s;
+  }
+  
+  .roundContainer button:hover {
+    background-color: #aaa;
+  }

@@ -1,0 +1,27 @@
+/* src/components/admin/InContest/StatCard/StatCard.module.css */
+
+.statCard {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 1rem;
+    text-align: center;
+    transition: box-shadow 0.2s;
+  }
+  
+  .statCard:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  }
+  
+  .value {
+    font-size: 2.2rem;
+    font-weight: 600;
+    color: #333;
+  }
+  
+  .label {
+    font-size: 0.85rem;
+    color: #666;
+    margin-top: 0.2rem;
+  }
+  

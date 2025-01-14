@@ -1,6 +1,6 @@
-// src/components/admin/InContest/QuestionList/QuestionsList.js
+// src/components/admin/InContest/QuestionList/QuestionList.js
 import React from "react";
-import styles from "./QuestionsList.module.css";
+import styles from "./QuestionList.module.css";
 
 function QuestionsList({ questions, onEditQuestion }) {
   return (

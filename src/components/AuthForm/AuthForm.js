@@ -24,7 +24,7 @@ function AuthForm() {
         email,
         options: {
           shouldCreateUser: true, 
-          emailRedirectTo: "http://localhost:3000/verify", 
+          emailRedirectTo: "http://192.168.68.102:3000/verify", 
         },
       });
 

@@ -4,51 +4,53 @@ import { supabase } from "../../../../supabase";
 import styles from "./QuestionModal.module.css";
 
 function QuestionModal({ contestId, question, onClose, onSavedOrDeleted }) {
-  // question=null means "creating new," otherwise we load existing
   const isEditing = !!question;
   const [round, setRound] = useState(question?.round || 1);
-  const [text, setText] = useState(question?.text || "");
-  const [options, setOptions] = useState(question?.options || ["", "", ""]);
-  const [correctAnswer, setCorrectAnswer] = useState(question?.correctAnswer || "");
+  const [questionText, setQuestionText] = useState(question?.question || "");
+  const [options, setOptions] = useState(question?.options || ["", "", "", ""]);
+  const [correctOption, setCorrectOption] = useState(question?.correct_option || "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // handle create/update
+  function handleOptionChange(e, idx) {
+    const newOptions = [...options];
+    newOptions[idx] = e.target.value;
+    setOptions(newOptions);
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
-    if (!text.trim()) {
+    if (!questionText.trim()) {
       alert("Question text cannot be empty.");
       return;
     }
+    const finalOptions = options.filter((opt) => opt.trim());
     try {
       setLoading(true);
       setError(null);
 
       if (!isEditing) {
-        // Create new
         const { error } = await supabase.from("questions").insert({
           contest_id: contestId,
           round,
-          text,
-          options,
-          correctAnswer: correctAnswer || null,
+          question: questionText,
+          options: finalOptions,
+          correct_option: correctOption || null,
         });
         if (error) throw error;
       } else {
-        // Update existing
         const { error } = await supabase
           .from("questions")
           .update({
             round,
-            text,
-            options,
-            correctAnswer: correctAnswer || null,
+            question: questionText,
+            options: finalOptions,
+            correct_option: correctOption || null,
           })
           .eq("id", question.id);
         if (error) throw error;
       }
 
-      // done
       onSavedOrDeleted();
     } catch (err) {
       console.error("Error saving question:", err);
@@ -58,11 +60,10 @@ function QuestionModal({ contestId, question, onClose, onSavedOrDeleted }) {
     }
   }
 
-  // handle delete
   async function handleDelete() {
     if (!question) return;
-    const confirm = window.confirm("Delete this question?");
-    if (!confirm) return;
+    const confirmDelete = window.confirm("Delete this question?");
+    if (!confirmDelete) return;
 
     try {
       setLoading(true);
@@ -99,24 +100,33 @@ function QuestionModal({ contestId, question, onClose, onSavedOrDeleted }) {
           <div className={styles.formGroup}>
             <label>Question Text:</label>
             <textarea
-              value={text}
-              onChange={(e) => setText(e.target.value)}
+              value={questionText}
+              onChange={(e) => setQuestionText(e.target.value)}
             />
           </div>
+
           <div className={styles.formGroup}>
-            <label>Options (comma separated or array):</label>
-            {/* a simple approach or you can do more advanced UI */}
-            <textarea
-              value={options.join("\n")}
-              onChange={(e) => setOptions(e.target.value.split("\n"))}
-            />
+            <label>Options:</label>
+            <div className={styles.optionsGrid}>
+              {options.map((opt, idx) => (
+                <input
+                  key={idx}
+                  type="text"
+                  className={styles.optionInput}
+                  placeholder={`Option ${idx + 1}`}
+                  value={opt}
+                  onChange={(e) => handleOptionChange(e, idx)}
+                />
+              ))}
+            </div>
           </div>
+
           <div className={styles.formGroup}>
             <label>Correct Answer (optional):</label>
             <input
               type="text"
-              value={correctAnswer}
-              onChange={(e) => setCorrectAnswer(e.target.value)}
+              value={correctOption}
+              onChange={(e) => setCorrectOption(e.target.value)}
             />
           </div>
 
