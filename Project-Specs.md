@@ -38,59 +38,7 @@ This process repeats until only one winner remains or the event ends.
    - **Firebase Authentication**: For secure user login and registration.
    - **Firebase Functions (Optional / Likely not needed)**: For server-side logic, such as result processing or analytics.
 3. **Development Tools**:
-   - **Firebase Emulator**: For testing database interactions locally.
    - **Version Control**: Using GitHub/Git for collaboration and tracking.
-
-### Database Structure
-
-The database is organized into key nodes to manage users, contests, questions, answers, and participants effectively. The truth is that I think this is the right structure but you have the freedom to change this if you feel it will improve the project. For example, I'm not entirely sure the right way to use Firebase Authentication and have users in the DB. Additionally, this structure is a restructure of an old version I had, and is **not** fully integrated with the code yet. 
-
-Each node is described below:
-
-#### 1. **Answers**
-
-- **Purpose**: Stores user submissions for each contest.
-- **Fields**:
-  - `answer`: **User's submission.** Example: "Player A" (String).
-  - `round`: **Question round number.** Example: 1 (Integer).
-  - `timestamp`: **Submission time.** Example: "2024-09-17T22:57:30.5..." (String).
-  - `userId`: **User identifier.** Example: "dJMUSK5jtpiZ2nrUSFlBf..." (String).
-
-#### 2. **Contests**
-
-- **Purpose**: Manages the details of each quiz lobby.
-- **Fields**:
-  - `currentRound`: **Active round number.** Example: 1 (Integer).
-  - `finished`: **Contest status.** Example: false (Boolean).
-  - `lobbyOpen`: **Lobby availability.** Example: true (Boolean).
-  - `submissionOpen`: **Round submission status.** Example: false (Boolean).
-  - `name`: **Contest title.** Example: "Patriots v Jets MNF" (String).
-  - `startTime`: **Contest start time.** Example: "2024-09-19T20:20" (String).
-  - `price`: **Entry fee.** Example: 10.0 (Float).
-
-#### 3. **Participants**
-
-- **Purpose**: Tracks user participation in contests.
-- **Fields**:
-  - `active`: **Participation status.** Example: true (Boolean).
-  - `username`: **Participant name.** Example: "siondw" (String).
-  - `contestId`: **Linked contest.** Example: "contest123" (String).
-
-#### 4. **Questions**
-
-- **Purpose**: Stores the questions for each contest.
-- **Fields**:
-  - `correctOption`: **Right answer.** Example: "Player A" (String).
-  - `options`: **Answer choices.** Example: ["Player A", "Player B"] (Array of Strings).
-  - `question`: **Question text.** Example: "Who will score first?" (String).
-  - `round`: **Question round.** Example: 1 (Integer).
-
-#### 5. **Users**
-
-- **Purpose**: Maintains user profiles.
-- **Fields**:
-  - `phoneNumber`: **User contact.** Example: "+1 (917) 533-2005" (String).
-  - `username`: **User name.** Example: "janedoe" (String).
 
 ### User Flow
 
@@ -172,8 +120,5 @@ The **Admin Dashboard** is a critical feature that allows the Game Master to con
     - Number of active participants remaining.
 
 ### App Screens and descriptions
-
-![Registration Screen](image.png)
-![Login Screen](image-1.png)
 
 
