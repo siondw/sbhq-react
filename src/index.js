@@ -20,7 +20,7 @@ import reportWebVitals from "./reportWebVitals";
 // **Admin** imports
 import AdminScreen from "./screens/Admin/AdminScreen";
 import OverviewScreen from "./components/admin/Overview/OverviewScreen";
-import ContestDetail from "./components/admin/ContestDetail/ContestDetail";
+import ContestDetail from "./components/admin/ContestDetail/InContestScreen";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
