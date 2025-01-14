@@ -12,6 +12,7 @@ function VerificationScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [userHasUsername, setUserHasUsername] = useState(false);
   const [currentUserId, setCurrentUserId] = useState(null);
+  const [role, setRole] = useState(null); // To track user role
   const hasFetchedData = useRef(false); // Prevents multiple fetches
 
   useEffect(() => {
@@ -20,34 +21,39 @@ function VerificationScreen() {
       hasFetchedData.current = true;
 
       try {
+        console.log("Fetching session data...");
         const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
         if (sessionError || !sessionData?.session) {
+          console.error("Failed to fetch session:", sessionError);
           throw new Error("Failed to get current session");
         }
 
         const { user } = sessionData.session;
         setCurrentUserId(user.id);
 
+        console.log("Fetching user details from database for user ID:", user.id);
         const { data, error } = await supabase
           .from("users")
-          .select("username")
+          .select("username, role")
           .eq("id", user.id)
           .single();
 
         if (error) {
-          throw new Error("Error checking username in the database");
+          console.error("Database error fetching user details:", error);
+          throw new Error("Error checking user details in the database");
         }
 
-        // Check if the `username` is null
+        console.log("Fetched user data:", data);
         setUserHasUsername(!!data?.username);
+        setRole(data?.role);
 
-        // If the user has a username, delay the redirect by 1 second
         if (data?.username) {
           setTimeout(() => {
             navigate("/join-contests");
-          }, 1000); // 1-second delay
+          }, 1000);
         }
       } catch (err) {
+        console.error("Error in fetchUserData:", err.message);
         setError(err.message || "An unexpected error occurred.");
       } finally {
         setIsLoading(false);
@@ -55,7 +61,11 @@ function VerificationScreen() {
     };
 
     fetchUserData();
-  }, [navigate]); // Ensure dependencies include navigate
+
+    return () => {
+      hasFetchedData.current = false; // Reset fetch state
+    };
+  }, [navigate]);
 
   const handleUsernameSubmit = async (username) => {
     setIsLoading(true);
@@ -71,6 +81,7 @@ function VerificationScreen() {
 
       navigate("/join-contests");
     } catch (err) {
+      console.error("Error in handleUsernameSubmit:", err.message);
       setError(err.message || "An unexpected error occurred.");
     } finally {
       setIsLoading(false);
@@ -89,7 +100,7 @@ function VerificationScreen() {
       <div className={styles.content}>
         {userHasUsername ? (
           <MainText
-            header="Welcome Back!"
+            header={`Welcome Back, ${role === "admin" ? "Admin" : "User"}!`}
             subheader="Redirecting you to your dashboard..."
           />
         ) : (

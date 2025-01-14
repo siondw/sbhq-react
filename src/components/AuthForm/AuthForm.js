@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import LargeButton from "../CustomButton/LargeButton";
 import styles from "./AuthForm.module.css";
-import { supabase } from "../../supabase"; // Import your Supabase client
+import { supabase } from "../../supabase";
 
 function AuthForm() {
   const [email, setEmail] = useState("");
@@ -19,12 +19,16 @@ function AuthForm() {
     }
 
     try {
+      // Use the environment variable for the redirect URL
+      const redirectUrl = process.env.REACT_APP_REDIRECT_URL;
+      console.log("Redirect URL:", redirectUrl);
+
       // Use your `signInWithEmail` logic here
       const { data, error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          shouldCreateUser: true, 
-          emailRedirectTo: "https://www.sbhq.live/verify", 
+          shouldCreateUser: true,
+          emailRedirectTo: redirectUrl, // Dynamically set redirect URL
         },
       });
 

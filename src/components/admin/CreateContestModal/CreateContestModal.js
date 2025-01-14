@@ -1,57 +1,60 @@
-// src/components/admin/Overview/CreateContestModal.js
-
 import React, { useState } from "react";
-import { supabase } from "../../../supabase"; 
+import { supabase } from "../../../supabase";
 import styles from "./CreateContestModal.module.css";
 
 function CreateContestModal({ onClose, onCreated }) {
   const [name, setName] = useState("");
-  const [date, setDate] = useState(""); // "2025-01-12T21:00"
+  const [date, setDate] = useState(""); // Expected "YYYY-MM-DDTHH:mm"
   const [price, setPrice] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   async function handleSubmit(e) {
     e.preventDefault();
+    setError(null);
+
+    // Validate form fields
     if (!name.trim()) {
-      alert("Please provide a contest name.");
+      setError("Please provide a contest name.");
       return;
     }
     if (!date) {
-      alert("Please choose a date/time.");
+      setError("Please choose a date and time.");
       return;
     }
-    if (!price) {
-      alert("Please provide a price.");
+    if (!price || isNaN(price)) {
+      setError("Please provide a valid numeric price.");
       return;
     }
 
     setLoading(true);
-    setError(null);
 
     try {
-      // Insert a new row with defaults
-      // current_round=0, finished=false, lobby_open=false, submission_open=false
+      // Parse and convert local date to UTC
+      const localDate = new Date(date);
+      const utcDate = localDate.toISOString();
+
+      // Insert into the database
       const { error } = await supabase.from("contests").insert([
         {
-          name,
-          start_time: date, // "2025-01-12T21:00"
-          price,
+          name: name.trim(),
+          start_time: utcDate, // Save as UTC ISO string
+          price: parseFloat(price),
           current_round: 0,
           finished: false,
           lobby_open: false,
           submission_open: false,
         },
       ]);
+
       if (error) throw error;
 
-      // Fire onCreated so parent can refresh data
+      // Refresh parent data and close modal
       onCreated();
-      // Close modal
       onClose();
     } catch (err) {
-      console.error("Error creating contest:", err);
-      setError(err.message);
+      console.error("Error during contest creation:", err);
+      setError("Failed to create contest. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -62,7 +65,7 @@ function CreateContestModal({ onClose, onCreated }) {
       <div className={styles.modalContent}>
         <h2 className={styles.modalTitle}>Create New Contest</h2>
 
-        {/* The form */}
+        {/* Form */}
         <form onSubmit={handleSubmit}>
           <div className={styles.formGroup}>
             <label className={styles.label}>Contest Name:</label>
@@ -96,7 +99,7 @@ function CreateContestModal({ onClose, onCreated }) {
             />
           </div>
 
-          {error && <div className={styles.error}>Error: {error}</div>}
+          {error && <div className={styles.error}>{error}</div>}
 
           <div className={styles.buttonRow}>
             <button
@@ -107,7 +110,11 @@ function CreateContestModal({ onClose, onCreated }) {
             >
               Cancel
             </button>
-            <button type="submit" className={styles.submitButton} disabled={loading}>
+            <button
+              type="submit"
+              className={styles.submitButton}
+              disabled={loading}
+            >
               {loading ? "Creating..." : "Create"}
             </button>
           </div>

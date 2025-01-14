@@ -15,6 +15,7 @@ import LobbyScreen from "./screens/Lobby/LobbyScreen";
 import JoinContestsScreen from "./screens/JoinContests/JoinContestsScreen";
 
 import { AuthProvider } from "./contexts/AuthContext";
+import ProtectedRoute from "./components/ProtectedRoute/ProtectedRoute"; // Import ProtectedRoute
 import reportWebVitals from "./reportWebVitals";
 
 // **Admin** imports
@@ -39,19 +40,18 @@ root.render(
           <Route path="/lobby" element={<LobbyScreen />} />
           <Route path="/join-contests" element={<JoinContestsScreen />} />
 
-          {/* Admin routes */}
-          <Route path="/admin" element={<AdminScreen />}>
-            {/* 
-              /admin => OverviewScreen 
-              (we use 'index' to show OverviewScreen when the path is exactly /admin)
-            */}
-            <Route index element={<OverviewScreen />} />
+          {/* Protected Admin Routes */}
+          <Route element={<ProtectedRoute adminOnly={true} />}>
+            <Route path="/admin" element={<AdminScreen />}>
+              {/* /admin => OverviewScreen */}
+              <Route index element={<OverviewScreen />} />
 
-            {/* /admin/:id => ContestDetail */}
-            <Route path=":id" element={<ContestDetail />} />
+              {/* /admin/:id => ContestDetail */}
+              <Route path=":id" element={<ContestDetail />} />
 
-            {/* fallback for unknown paths under /admin */}
-            <Route path="*" element={<Navigate replace to="/admin" />} />
+              {/* Fallback for unknown paths under /admin */}
+              <Route path="*" element={<Navigate replace to="/admin" />} />
+            </Route>
           </Route>
         </Routes>
       </AuthProvider>

@@ -5,6 +5,7 @@ import MainText from "../../components/MainText/MainText";
 import PlayerList from "../../components/PlayersList/PlayersList";
 import styles from "./LobbyScreen.module.css";
 import { supabase } from "../../supabase";
+import { formatInTimeZone } from "date-fns-tz";
 
 function LobbyScreen() {
   const location = useLocation();
@@ -31,7 +32,8 @@ function LobbyScreen() {
 
         if (error) throw error;
 
-        const activePlayers = data?.map((participant) => participant.users.username) || [];
+        const activePlayers =
+          data?.map((participant) => participant.users.username) || [];
         setPlayers(activePlayers);
       } catch (err) {
         console.error("Failed to fetch participants:", err.message);
@@ -43,20 +45,18 @@ function LobbyScreen() {
 
   // Calculate and update time remaining
   useEffect(() => {
-    if (contest?.start_time) {
-      const contestStartTime = new Date(contest.start_time).getTime();
-      setTimeRemaining(calculateTimeRemaining(contestStartTime));
-    }
+    const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+    const contestStartTime = new Date(contest?.start_time).getTime();
+    setTimeRemaining(calculateTimeRemaining(contestStartTime));
 
     const timer = setInterval(() => {
-      if (contest?.start_time) {
-        const newTimeRemaining = calculateTimeRemaining(new Date(contest.start_time).getTime());
-        if (newTimeRemaining <= 0) {
-          clearInterval(timer);
-          navigate("/question", { state: { contest } });
-        }
-        setTimeRemaining(newTimeRemaining);
+      const newTimeRemaining = calculateTimeRemaining(contestStartTime);
+      if (newTimeRemaining <= 0) {
+        clearInterval(timer);
+        navigate("/question", { state: { contest } });
       }
+      setTimeRemaining(newTimeRemaining);
     }, 1000);
 
     return () => clearInterval(timer);
