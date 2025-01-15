@@ -83,14 +83,16 @@ function LobbyScreen() {
 
       if (remaining <= 0) {
         setTimeRemaining(0); // Prevent negative values
-        clearInterval(timer);
+        clearInterval(timerRef.current); // Use timerRef to clear interval
       }
     };
 
-    updateTimer(); // Set initial timer value
-    const timer = setInterval(updateTimer, 1000);
+    const timerRef = { current: null }; // Use an object reference to store the timer
+    timerRef.current = setInterval(updateTimer, 1000);
 
-    return () => clearInterval(timer); // Cleanup on unmount
+    updateTimer(); // Set initial timer value
+
+    return () => clearInterval(timerRef.current); // Cleanup on unmount
   }, [contest?.start_time]);
 
   // Helper functions
