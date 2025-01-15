@@ -30,6 +30,9 @@ function InContestScreen() {
   // Round
   const [currentRound, setCurrentRound] = useState(0);
 
+  // Round for reinstatement function
+  const [reinstateRound, setReinstateRound] = useState("");
+
   // Participants count (only active participants)
   const [activeParticipants, setActiveParticipants] = useState(0);
 
@@ -195,6 +198,38 @@ function InContestScreen() {
     setQuestionToEdit(null);
   }
 
+  // 6) Reinstate participants from a round
+  async function handleReinstateParticipants() {
+    if (!reinstateRound) {
+      alert("Please enter a valid round number.");
+      return;
+    }
+    if (
+      !window.confirm(`Reinstate participants from round ${reinstateRound}?`)
+    ) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("participants")
+        .update({ active: true, elimination_round: null })
+        .eq("contest_id", contestId)
+        .eq("elimination_round", parseInt(reinstateRound, 10));
+
+      if (error) {
+        console.error("Error reinstating participants:", error.message);
+        alert("Failed to reinstate participants.");
+      } else {
+        alert(
+          `Participants from round ${reinstateRound} reinstated successfully!`
+        );
+      }
+    } catch (err) {
+      console.error("Error:", err.message);
+    }
+  }
+
   // After we add or edit a question, re-fetch questions
   async function handleQuestionSavedOrDeleted() {
     closeQuestionModal();
@@ -243,13 +278,23 @@ function InContestScreen() {
         <div className={styles.leftColumn}>
           <StatCard value={activeParticipants} label="PARTICIPANTS" />
           <StatCard value={currentRound} label="ROUND" />
-          <div className={styles.leftColumnSpacer}></div>
-          <button
-            className={styles.backLink}
-            onClick={() => navigate("/admin")}
-          >
-            ← Back to Contests
-          </button>
+
+          {/* Reinstate Participants Card */}
+          <div className={styles.reinstateCard}>
+            <input
+              type="number"
+              placeholder="Enter Round Number"
+              value={reinstateRound}
+              onChange={(e) => setReinstateRound(e.target.value)}
+              className={styles.roundInput}
+            />
+            <button
+              className={styles.reinstateButton}
+              onClick={handleReinstateParticipants}
+            >
+              Reinstate Players
+            </button>
+          </div>
         </div>
 
         {/* Center area: Current question view */}
