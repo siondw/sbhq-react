@@ -80,6 +80,48 @@ function InContestScreen() {
     fetchContestData();
   }, [contestId]);
 
+  // 1) Real-time subscription for participants
+  useEffect(() => {
+    // Create a channel for real-time updates
+    const channel = supabase
+      .channel(`participants-changes-${contestId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*", // or 'UPDATE' if you only want updates
+          schema: "public",
+          table: "participants",
+          filter: `contest_id=eq.${contestId}`,
+        },
+        async (payload) => {
+          // You can inspect payload.old / payload.new if you want to be more specific
+          // about changes to the 'active' field.
+          // For instance:
+          //   if (payload.new.active !== payload.old.active) {...}
+
+          // For simplicity, just re-fetch the active participants count:
+          const { count, error } = await supabase
+            .from("participants")
+            .select("id", { count: "exact", head: true })
+            .eq("contest_id", contestId)
+            .eq("active", true);
+
+          if (error) {
+            console.error("Error fetching updated participant count", error);
+            return;
+          }
+
+          setActiveParticipants(count || 0);
+        }
+      )
+      .subscribe();
+
+    // Cleanup: unsubscribe from the channel when component unmounts or contestId changes
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [contestId]);
+
   // 2) Fetch all questions for this contest
   useEffect(() => {
     async function fetchQuestions() {
@@ -200,14 +242,11 @@ function InContestScreen() {
         {/* Left column: stat cards */}
         <div className={styles.leftColumn}>
           <StatCard value={activeParticipants} label="PARTICIPANTS" />
-          <StatCard
-            value={currentRound}
-            label="ROUND"
-          />
+          <StatCard value={currentRound} label="ROUND" />
           <div className={styles.leftColumnSpacer}></div>
-          <button 
+          <button
             className={styles.backLink}
-            onClick={() => navigate('/admin')}
+            onClick={() => navigate("/admin")}
           >
             ← Back to Contests
           </button>
@@ -250,10 +289,7 @@ function InContestScreen() {
       </button>
 
       {/* Add back button before closing wrapper div */}
-      <button 
-        className={styles.backButton}
-        onClick={() => navigate('/admin')}
-      >
+      <button className={styles.backButton} onClick={() => navigate("/admin")}>
         ← Back to Contests
       </button>
     </div>
