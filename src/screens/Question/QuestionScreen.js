@@ -80,7 +80,7 @@ function QuestionScreen() {
 
     fetchContestData();
 
-    // 2) Real-time subscription to see if submissions get closed for this contest
+    // Real-time subscription to see if submissions get closed for this contest
     const contestChannel = supabase
       .channel(`contest-${contest.id}`)
       .on(
@@ -103,80 +103,51 @@ function QuestionScreen() {
       )
       .subscribe();
 
-    // 3) Also subscribe to this user's participant row to detect if they become inactive
-    const participantChannel = supabase
-      .channel(`participant-${user?.id}-${contest.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "participants",
-          // Listen only for this contest + this user's participant record
-          filter: `contest_id=eq.${contest.id},user_id=eq.${user?.id}`,
-        },
-        async (payload) => {
-          const newParticipant = payload.new;
-          if (newParticipant && !newParticipant.active) {
-            console.log("User became inactive. Redirecting to /eliminated...");
-            navigate("/eliminated", { state: { contest } });
-          }
-        }
-      )
-      .subscribe();
-
     return () => {
       supabase.removeChannel(contestChannel);
-      supabase.removeChannel(participantChannel);
     };
   }, [contest, navigate, user?.id]);
 
   // 4) Handle Submit
   const handleSubmit = async (selectedAnswer, questionId) => {
-    console.log("Submit initiated with answer:", selectedAnswer);
-    setInactiveError(""); // Clear any previous error
-
+    console.log("Submit initiated with answer:", selectedAnswer, "for question:", questionId);
+    setInactiveError("");
+  
     if (!selectedAnswer) {
       alert("Please select an answer before submitting.");
       return;
     }
-
+  
     try {
-      // Re-fetch participant to ensure they're still active
       const { data: participant, error: participantError } = await supabase
         .from("participants")
         .select("id, active")
         .eq("user_id", user.id)
         .eq("contest_id", contest.id)
         .single();
-
-      console.log("Participant fetched:", participant);
-
+  
       if (participantError || !participant) {
         throw new Error("Could not find participant information.");
       }
-
+  
       if (!participant.active) {
-        // If the user is no longer active, show an error in the UI
         setInactiveError("You are no longer active in this contest.");
         return;
       }
-
-      // If still active, insert their answer
-      const participantId = participant.id;
-
+  
       const { error: answerError } = await supabase.from("answers").insert({
         contest_id: contest.id,
-        participant_id: participantId,
+        participant_id: participant.id,
         round: currentRound,
+        question_id: questionId, 
         answer: selectedAnswer,
         timestamp: new Date().toISOString(),
       });
-
+  
       if (answerError) {
         throw new Error("Failed to submit the answer.");
       }
-
+  
       console.log("Answer submitted successfully.");
       navigate("/submitted", {
         state: {
@@ -191,6 +162,7 @@ function QuestionScreen() {
       alert("There was an error submitting your answer. Please try again.");
     }
   };
+  
 
   // 5) If submissions are closed, we do a blank submission and eliminate
   const handleBlankSubmission = async () => {

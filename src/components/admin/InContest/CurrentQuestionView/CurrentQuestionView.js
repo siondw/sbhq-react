@@ -35,8 +35,7 @@ function CurrentQuestionView({
       const { data: answers, error } = await supabase
         .from("answers")
         .select("answer")
-        .eq("contest_id", contest.id)
-        .eq("round", roundNumber);
+        .eq("question_id", questionId); // Updated to use question_id
 
       if (error) throw error;
 
@@ -53,7 +52,7 @@ function CurrentQuestionView({
     } catch (err) {
       console.error("Error fetching distribution:", err);
     }
-  }, [questionId, contest.id, roundNumber]);
+  }, [questionId]);
 
   useEffect(() => {
     // Initial fetch
@@ -69,17 +68,17 @@ function CurrentQuestionView({
     console.log("Setting up real-time subscription for question ID:", questionId);
 
     const channel = supabase
-      .channel(`answers-contest-${contest.id}-round-${roundNumber}`)
+      .channel(`answers-question-${questionId}`) // Updated channel name
       .on(
         "postgres_changes",
         {
           event: "INSERT",
           schema: "public",
           table: "answers",
-          filter: `contest_id=eq.${contest.id},round=eq.${roundNumber}`,
+          filter: `question_id=eq.${questionId}`, // Updated to filter by question_id
         },
         (payload) => {
-          console.log("Real-time insert event received:", payload);
+          console.log("Real-time insert event received for question ID:", questionId, payload);
           fetchAnswersDistribution();
         }
       )
@@ -89,7 +88,7 @@ function CurrentQuestionView({
       console.log("Cleaning up subscription for question ID:", questionId);
       supabase.removeChannel(channel);
     };
-  }, [questionId, contest.id, roundNumber, fetchAnswersDistribution]);
+  }, [questionId, fetchAnswersDistribution]);
 
   if (!currentQ) {
     console.log("No question for the current round:", roundNumber);
