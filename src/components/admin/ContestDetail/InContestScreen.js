@@ -80,36 +80,6 @@ function InContestScreen() {
     fetchContestData();
   }, [contestId]);
 
-  // Add real-time listener for contest updates
-  useEffect(() => {
-    if (!contestId) return;
-
-    const channel = supabase
-      .channel(`contest-updates-${contestId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "contests",
-          filter: `id=eq.${contestId}`,
-        },
-        (payload) => {
-          const updatedContest = payload.new;
-          setContest(updatedContest);
-          setLobbyOpen(updatedContest.lobby_open);
-          setSubmissionOpen(updatedContest.submission_open);
-          setFinished(updatedContest.finished);
-          setCurrentRound(updatedContest.current_round || 0);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [contestId]);
-
   // 2) Fetch all questions for this contest
   useEffect(() => {
     async function fetchQuestions() {
@@ -277,6 +247,14 @@ function InContestScreen() {
       {/* Possibly a floating + button if you prefer */}
       <button className={styles.fab} onClick={openCreateQuestionModal}>
         +
+      </button>
+
+      {/* Add back button before closing wrapper div */}
+      <button 
+        className={styles.backButton}
+        onClick={() => navigate('/admin')}
+      >
+        ← Back to Contests
       </button>
     </div>
   );
