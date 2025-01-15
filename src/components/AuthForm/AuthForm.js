@@ -8,7 +8,7 @@ function AuthForm() {
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
-  const handleSubmit = async (event) => {
+  const handleEmailSubmit = async (event) => {
     event.preventDefault();
     setSuccessMessage("");
     setErrorMessage("");
@@ -19,16 +19,14 @@ function AuthForm() {
     }
 
     try {
-      // Use the environment variable for the redirect URL
       const redirectUrl = process.env.REACT_APP_REDIRECT_URL;
       console.log("Redirect URL:", redirectUrl);
 
-      // Use your `signInWithEmail` logic here
       const { data, error } = await supabase.auth.signInWithOtp({
         email,
         options: {
           shouldCreateUser: true,
-          emailRedirectTo: redirectUrl, // Dynamically set redirect URL
+          emailRedirectTo: redirectUrl,
         },
       });
 
@@ -44,20 +42,49 @@ function AuthForm() {
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: process.env.REACT_APP_REDIRECT_URL,
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+    } catch (error) {
+      setErrorMessage(error.message || "Failed to sign in with Google.");
+    }
+  };
+
   return (
-    <form className={styles.form} onSubmit={handleSubmit}>
-      <input
-        className={styles.inputField}
-        type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        placeholder="Email"
-        required
-      />
-      {errorMessage && <div className={styles.error}>{errorMessage}</div>}
-      {successMessage && <div className={styles.success}>{successMessage}</div>}
-      <LargeButton text="Send Magic Link" type="submit" />
-    </form>
+    <div className={styles.authFormContainer}>
+      <button
+        className={styles.googleButton}
+        onClick={handleGoogleSignIn}
+        type="button"
+      >
+        Continue with Google
+      </button>
+      <div className={styles.divider}>
+        <span>or</span>
+      </div>
+      <form className={styles.form} onSubmit={handleEmailSubmit}>
+        <input
+          className={styles.inputField}
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Email"
+          required
+        />
+        {errorMessage && <div className={styles.error}>{errorMessage}</div>}
+        {successMessage && <div className={styles.success}>{successMessage}</div>}
+        <LargeButton text="Send Magic Link" type="submit" />
+      </form>
+    </div>
   );
 }
 

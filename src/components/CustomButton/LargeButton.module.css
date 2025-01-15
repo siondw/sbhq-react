@@ -7,5 +7,6 @@
     border-radius: 5px;  /* Example border radius */
     font-size: 18px;
     cursor: pointer;
-    box-shadow: 0 0 10px var(--green); /* Adjust these values to change the glow effect */
+    /* Adjust these values to change the glow effect */
+    /* box-shadow: 0 0 10px var(--green);  */
 }
