@@ -5,7 +5,6 @@ import MainText from "../../components/MainText/MainText";
 import PlayerList from "../../components/PlayersList/PlayersList";
 import styles from "./LobbyScreen.module.css";
 import { supabase } from "../../supabase";
-import { formatInTimeZone } from "date-fns-tz";
 
 function LobbyScreen() {
   const location = useLocation();
@@ -43,30 +42,61 @@ function LobbyScreen() {
     fetchParticipants();
   }, [contest?.id]);
 
-  // Calculate and update time remaining
+  // Listen for updates to 'submission_open' in the current contest
   useEffect(() => {
-    const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (!contest?.id) return;
 
-    const contestStartTime = new Date(contest?.start_time).getTime();
-    setTimeRemaining(calculateTimeRemaining(contestStartTime));
+    const channel = supabase
+      .channel(`contest-updates-${contest.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE", // Listen for UPDATEs
+          schema: "public", // Schema name
+          table: "contests", // Table name
+          filter: `id=eq.${contest.id}`, // Filter for the specific contest
+        },
+        (payload) => {
+          const updatedContest = payload.new;
+          if (updatedContest.submission_open) {
+            navigate("/question", { state: { contest: updatedContest } });
+          }
+        }
+      )
+      .subscribe();
 
-    const timer = setInterval(() => {
-      const newTimeRemaining = calculateTimeRemaining(contestStartTime);
-      if (newTimeRemaining <= 0) {
+    // Cleanup subscription on unmount
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [contest?.id, navigate]);
+
+  // Update countdown timer
+  useEffect(() => {
+    if (!contest?.start_time) return;
+
+    const contestStartTime = new Date(contest.start_time).getTime();
+
+    const updateTimer = () => {
+      const remaining = calculateTimeRemaining(contestStartTime);
+      setTimeRemaining(remaining);
+
+      if (remaining <= 0) {
+        setTimeRemaining(0); // Prevent negative values
         clearInterval(timer);
-        navigate("/question", { state: { contest } });
       }
-      setTimeRemaining(newTimeRemaining);
-    }, 1000);
+    };
 
-    return () => clearInterval(timer);
-  }, [contest, navigate]);
+    updateTimer(); // Set initial timer value
+    const timer = setInterval(updateTimer, 1000);
+
+    return () => clearInterval(timer); // Cleanup on unmount
+  }, [contest?.start_time]);
 
   // Helper functions
   function calculateTimeRemaining(startTime) {
     const now = new Date().getTime();
-    const difference = startTime - now;
-    return Math.max(difference, 0);
+    return Math.max(startTime - now, 0); // Ensure no negative values
   }
 
   function formatTime(ms) {
@@ -98,11 +128,7 @@ function LobbyScreen() {
             {formatTime(timeRemaining)}
           </span>
         </div>
-        <MainText
-          header=""
-          subheader="until the game starts..."
-          gradient={gradientStyle}
-        />
+        <MainText subheader="until the game starts..." gradient={gradientStyle} />
         <PlayerList players={players} />
       </div>
     </div>
