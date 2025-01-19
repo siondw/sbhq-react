@@ -1,4 +1,3 @@
-// src/pages/CorrectScreen/CorrectScreen.js
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -23,7 +22,42 @@ function CorrectScreen() {
   const [numberOfRemainingPlayers, setNumberOfRemainingPlayers] = useState(0);
   const [loadingPlayers, setLoadingPlayers] = useState(true);
 
-  // 1) On mount, fetch participants & see if user is still active
+  // 1) Check contest state on mount for refresh fallback
+  useEffect(() => {
+    if (!contest?.id) return;
+
+    const fetchOnMount = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("contests")
+          .select("submission_open, current_round")
+          .eq("id", contest.id)
+          .single();
+
+        if (error) {
+          console.error("Error fetching contest state on refresh:", error);
+          return;
+        }
+
+        if (data?.submission_open) {
+          navigate("/question", {
+            replace: true,
+            state: {
+              contest: { ...contest, ...data }, // Merge updated data into state
+            },
+          });
+        } else {
+          setCurrentRound(data?.current_round || currentRound); // Sync round if needed
+        }
+      } catch (err) {
+        console.error("Failed to fetch contest state on refresh:", err.message);
+      }
+    };
+
+    fetchOnMount();
+  }, [contest?.id, navigate, currentRound]);
+
+  // 2) Fetch participants & see if user is still active
   useEffect(() => {
     if (!contest?.id || !user?.id) return;
 
@@ -58,7 +92,7 @@ function CorrectScreen() {
     fetchParticipants();
   }, [contest?.id, user?.id, navigate]);
 
-  // 2) Subscribe to real-time updates in `contests` and `participants`
+  // 3) Subscribe to real-time updates in `contests` and `participants`
   useEffect(() => {
     if (!contest?.id || !user?.id) return;
 
@@ -73,25 +107,19 @@ function CorrectScreen() {
           table: "contests",
           filter: `id=eq.${contest.id}`,
         },
-        (payload) => {
-          const newRound = payload.new.current_round;
+        async (payload) => {
+          console.log("Contest payload:", payload);
           const newSubmissionOpen = payload.new.submission_open;
 
-          // Always keep our local round in sync, in case the admin changes it
-          setCurrentRound(newRound);
-
-          // If the admin opened submissions, we assume it's time for the next question
           if (newSubmissionOpen === true) {
             navigate("/question", {
               replace: true,
               state: {
-                contest: {
-                  ...contest,
-                  current_round: newRound,
-                  submission_open: true,
-                },
+                contest: { ...contest, ...payload.new },
               },
             });
+          } else {
+            setCurrentRound(payload.new.current_round);
           }
         }
       )
@@ -143,7 +171,7 @@ function CorrectScreen() {
     };
   }, [contest?.id, user?.id, navigate]);
 
-  // 3) Prevent back navigation
+  // 4) Prevent back navigation
   useEffect(() => {
     const blockBack = () => {
       window.history.pushState(null, document.title, window.location.href);

@@ -153,7 +153,10 @@ function LobbyScreen() {
             {formatTime(timeRemaining)}
           </span>
         </div>
-        <MainText subheader="until the game starts..." gradient={gradientStyle} />
+        <MainText
+          subheader="until the game starts..."
+          gradient={gradientStyle}
+        />
         <PlayerList players={players} />
       </div>
     </div>

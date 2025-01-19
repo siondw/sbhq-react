@@ -49,51 +49,56 @@ function JoinContestsScreen() {
   }, [user]);
 
   useEffect(() => {
+    let isRedirected = false; // Track redirection state
+
     const checkOpenLobbies = async () => {
+      if (isRedirected) return; // Stop polling after redirect
+
       try {
         // Step 1: Fetch contests where the user is a participant
         const { data: userContests, error: participantsError } = await supabase
           .from("participants")
           .select("contest_id")
           .eq("user_id", user?.id);
-  
+
         if (participantsError) throw participantsError;
-  
+
         if (userContests.length === 0) {
           // User is not registered for any contests
           return;
         }
-  
+
         // Step 2: Extract contest IDs from the user's participants data
         const contestIds = userContests.map((p) => p.contest_id);
-  
+
         // Step 3: Fetch open lobbies among the contests the user is registered for
         const { data: openContests, error: contestsError } = await supabase
           .from("contests")
           .select("*")
           .in("id", contestIds) // Narrow search to only relevant contest IDs
           .eq("lobby_open", true);
-  
+
         if (contestsError) throw contestsError;
-  
+
         if (openContests && openContests.length > 0) {
           // Redirect to the lobby of the first open contest
+          isRedirected = true; // Mark as redirected
           navigate("/lobby", { state: { contest: openContests[0] } });
         }
       } catch (err) {
         console.error("Failed to check open lobbies:", err.message);
       }
     };
-  
+
     // Check immediately on mount
     checkOpenLobbies();
-  
+
     // Then set up polling
     const interval = setInterval(checkOpenLobbies, 10000);
-  
+
     return () => clearInterval(interval);
   }, [navigate, user]);
-    
+
   // Handle joining a contest
   const handleJoinContest = async (contestId) => {
     if (!user) {

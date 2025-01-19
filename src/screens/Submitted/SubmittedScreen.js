@@ -22,33 +22,6 @@ function SubmittedScreen() {
     hasState: !!location.state,
   });
 
-  useEffect(() => {
-    if (!location.state) {
-      console.error("No state provided to SubmittedScreen");
-      navigate("/");
-      return;
-    }
-
-    if (!contest?.id || !questionId || !selectedAnswer) {
-      console.error("Missing required state:", {
-        contestId: contest?.id,
-        questionId,
-        selectedAnswer,
-      });
-      navigate("/");
-      return;
-    }
-  }, [location.state, contest, questionId, selectedAnswer, navigate]);
-
-  const contestId = contest?.id;
-
-  console.log("SubmittedScreen state:", {
-    contestId,
-    questionId,
-    selectedAnswer,
-    locationState: location.state,
-  });
-
   const [correctAnswer, setCorrectAnswer] = useState(null);
   const [statusChecked, setStatusChecked] = useState(false);
   const [error, setError] = useState(null);
@@ -56,17 +29,14 @@ function SubmittedScreen() {
 
   // Validate required state and redirect if missing
   useEffect(() => {
-    console.log("First useEffect running - validation check");
-    if (!contestId || !questionId || selectedAnswer === undefined) {
-      console.log(
-        "Missing required data in location.state. Redirecting to /..."
-      );
+    if (!contest?.id || !questionId || selectedAnswer === undefined) {
+      console.error("Missing required data in location.state. Redirecting to /...");
       navigate("/", {
         replace: true,
         state: { message: "Invalid submission data." },
       });
     }
-  }, [contestId, questionId, selectedAnswer, navigate]);
+  }, [contest, questionId, selectedAnswer, navigate]);
 
   // Initial fetch for the correct answer
   useEffect(() => {
@@ -96,7 +66,7 @@ function SubmittedScreen() {
   }, [questionId]);
 
   // Real-time listener for the correct_option field
-  useEffect(() => {
+  const setupRealtimeListener = () => {
     if (!questionId) return;
 
     const channel = supabase
@@ -127,6 +97,50 @@ function SubmittedScreen() {
     return () => {
       console.log("Unsubscribing from real-time updates");
       supabase.removeChannel(channel);
+    };
+  };
+
+  useEffect(() => {
+    setupRealtimeListener();
+  }, [questionId]);
+
+  // Handle visibility changes to re-establish connection
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === "visible") {
+        console.log("Browser tab is active again. Checking for updates...");
+
+        // Perform a manual poll to fetch the latest correct_option
+        try {
+          const { data, error } = await supabase
+            .from("questions")
+            .select("correct_option")
+            .eq("id", questionId)
+            .single();
+
+          if (error) {
+            console.error("Error during manual poll:", error);
+            return;
+          }
+
+          if (data?.correct_option !== null) {
+            setCorrectAnswer(data.correct_option);
+            setStatusChecked(true);
+          }
+
+          // Re-establish the real-time listener
+          console.log("Re-establishing real-time listener");
+          setupRealtimeListener();
+        } catch (err) {
+          console.error("Error fetching correct answer during visibility check:", err.message);
+        }
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [questionId]);
 
