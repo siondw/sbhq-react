@@ -4,9 +4,6 @@
 
 The app is a **live sports-prop quiz platform** where users register, join live "quiz lobbies" (structured as matches), and compete by answering real-time sports-related prop questions. The unique aspect of this app is the role of the **Game Master**, who dynamically controls the flow of questions and submissions during live events. The goal should be to be able to handle a lobby of 100-1000 users simultaneously, without crashes.
 
-### Note
-The old db structure json file is in old-db.json. When you run the emulators you can import this to view the app as it is now. We do want to migrate to the stucture outined below
-
 ### How It Works:
 
 1. **Live Quiz Lobbies**: Users register and join a live quiz lobby. Each lobby corresponds to a live sports event or match.
@@ -34,9 +31,9 @@ This process repeats until only one winner remains or the event ends.
 1. **Frontend**:
    - **React**: For building a responsive, real-time user interface.
 2. **Backend**:
-   - **Firebase Realtime Database**: For handling real-time updates for lobbies, questions, submissions, and results.
-   - **Firebase Authentication**: For secure user login and registration.
-   - **Firebase Functions (Optional / Likely not needed)**: For server-side logic, such as result processing or analytics.
+   - **Supabase**: For handling real-time updates for lobbies, questions, submissions, and results.
+   - **Supabase Authentication**: For secure user login and registration.
+   - **Supabase Functions (Optional / Likely not needed)**: For server-side logic, such as result processing or analytics.
 3. **Development Tools**:
    - **Version Control**: Using GitHub/Git for collaboration and tracking.
 
@@ -118,7 +115,79 @@ The **Admin Dashboard** is a critical feature that allows the Game Master to con
     - Current question.
     - Number of users who have submitted answers.
     - Number of active participants remaining.
+### Database Schema
 
-### App Screens and descriptions
+#### Tables
+
+1. **`users`**:
+   - **Columns**:
+     - `id` (UUID, primary key, linked to `auth.users.id` for authentication)
+     - `username` (text)
+     - `created_at` (timestamp)
+     - `updated_at` (timestamp)
+     - `email` (text)
+     - `role` (text, e.g., admin/user)
+
+2. **`contests`**:
+   - **Columns**:
+     - `id` (UUID, primary key)
+     - `name` (text)
+     - `current_round` (integer)
+     - `finished` (boolean)
+     - `lobby_open` (boolean)
+     - `submission_open` (boolean)
+     - `start_time` (timestamptz)
+     - `price` (numeric)
+     - `created_at` (timestamp)
+   - **Relationships**:
+     - Links to `questions` and `participants`.
+
+3. **`participants`**:
+   - **Columns**:
+     - `id` (UUID, primary key)
+     - `contest_id` (UUID, foreign key, references `contests.id`)
+     - `user_id` (UUID, foreign key, references `users.id`)
+     - `active` (boolean)
+     - `elimination_round` (integer)
+
+4. **`questions`**:
+   - **Columns**:
+     - `id` (UUID, primary key)
+     - `contest_id` (UUID, foreign key, references `contests.id`)
+     - `round` (integer)
+     - `question` (text)
+     - `options` (JSONB)
+     - `correct_option` (text)
+
+5. **`answers`**:
+   - **Columns**:
+     - `id` (UUID, primary key)
+     - `participant_id` (UUID, foreign key, references `participants.id`)
+     - `round` (integer)
+     - `answer` (text)
+     - `timestamp` (timestamp)
+     - `contest_id` (UUID, foreign key, references `contests.id`)
+     - `question_id` (UUID, foreign key, references `questions.id`)
+
+#### Relationships
+
+1. **`users` ↔ `participants`**:
+   - `participants.user_id` references `users.id`.
+
+2. **`contests` ↔ `participants`**:
+   - `participants.contest_id` references `contests.id`.
+
+3. **`contests` ↔ `questions`**:
+   - `questions.contest_id` references `contests.id`.
+
+4. **`participants` ↔ `answers`**:
+   - `answers.participant_id` references `participants.id`.
+
+5. **`questions` ↔ `answers`**:
+   - `answers.question_id` references `questions.id`.
+
+6. **`contests` ↔ `answers`**:
+   - `answers.contest_id` references `contests.id`.
+
 
 

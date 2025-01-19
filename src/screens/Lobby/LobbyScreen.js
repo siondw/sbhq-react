@@ -14,62 +14,85 @@ function LobbyScreen() {
   const [players, setPlayers] = useState([]);
   const [timeRemaining, setTimeRemaining] = useState(0);
 
-  // Fetch participants from Supabase
-  useEffect(() => {
-    const fetchParticipants = async () => {
-      if (!contest?.id) {
-        console.error("Contest ID is missing");
-        return;
-      }
-
-      try {
-        const { data, error } = await supabase
-          .from("participants")
-          .select("user_id, active, users(username)")
-          .eq("contest_id", contest.id)
-          .eq("active", true);
-
-        if (error) throw error;
-
-        const activePlayers =
-          data?.map((participant) => participant.users.username) || [];
-        setPlayers(activePlayers);
-      } catch (err) {
-        console.error("Failed to fetch participants:", err.message);
-      }
-    };
-
-    fetchParticipants();
-  }, [contest?.id]);
-
   // Listen for updates to 'submission_open' in the current contest
   useEffect(() => {
     if (!contest?.id) return;
 
-    const channel = supabase
-      .channel(`contest-updates-${contest.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE", // Listen for UPDATEs
-          schema: "public", // Schema name
-          table: "contests", // Table name
-          filter: `id=eq.${contest.id}`, // Filter for the specific contest
-        },
-        (payload) => {
-          const updatedContest = payload.new;
-          if (updatedContest.submission_open) {
-            navigate("/question", { state: { contest: updatedContest } });
-          }
-        }
-      )
-      .subscribe();
+    const checkSubmissionOpen = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("contests")
+          .select("submission_open")
+          .eq("id", contest.id)
+          .single();
 
-    // Cleanup subscription on unmount
+        if (error) {
+          console.error("Error fetching contest:", error);
+          return;
+        }
+
+        if (data?.submission_open) {
+          navigate("/question", { state: { contest } });
+        } else {
+          setupRealtimeListener();
+          fetchParticipants();
+        }
+      } catch (err) {
+        console.error("Failed to check submission_open:", err.message);
+      }
+    };
+
+    const setupRealtimeListener = () => {
+      supabase
+        .channel(`contest-updates-${contest.id}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "UPDATE",
+            schema: "public",
+            table: "contests",
+            filter: `id=eq.${contest.id}`,
+          },
+          (payload) => {
+            const updatedContest = payload.new;
+            if (updatedContest?.submission_open) {
+              navigate("/question", { state: { contest: updatedContest } });
+            }
+          }
+        )
+        .subscribe();
+    };
+
+    checkSubmissionOpen();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(`contest-updates-${contest.id}`);
     };
   }, [contest?.id, navigate]);
+
+  // Fetch participants from Supabase
+  const fetchParticipants = async () => {
+    if (!contest?.id) {
+      console.error("Contest ID is missing");
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from("participants")
+        .select("user_id, active, users(username)")
+        .eq("contest_id", contest.id)
+        .eq("active", true);
+
+      if (error) throw error;
+
+      const activePlayers =
+        data?.map((participant) => participant.users.username) || [];
+      setPlayers(activePlayers);
+    } catch (err) {
+      console.error("Failed to fetch participants:", err.message);
+    }
+  };
 
   // Update countdown timer
   useEffect(() => {
