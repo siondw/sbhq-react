@@ -1,5 +1,5 @@
 import React from "react";
-import styles from "./Header.module.css"; // Assuming you moved the CSS to a separate file
+import styles from "./Header.module.css";
 import { useAuth } from '../../contexts/AuthContext';
 
 import MySvgComponent from "../SVG.js"

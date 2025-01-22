@@ -4,7 +4,7 @@ import Header from "../../components/Header/Header";
 import MainText from "../../components/MainText/MainText";
 import UsernameInput from "../../components/UsernameInput/UsernameInput";
 import styles from "./VerificationScreen.module.css";
-import { supabase } from "../../supabase"; // Import your Supabase client
+import { supabase } from "../../supabase";
 
 function VerificationScreen() {
   const navigate = useNavigate();
@@ -12,16 +12,15 @@ function VerificationScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [userHasUsername, setUserHasUsername] = useState(false);
   const [currentUserId, setCurrentUserId] = useState(null);
-  const [role, setRole] = useState(null); // To track user role
-  const hasFetchedData = useRef(false); // Prevents multiple fetches
+  const [role, setRole] = useState(null);
+  const hasFetchedData = useRef(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
-      if (hasFetchedData.current) return; // Avoid duplicate requests
+      if (hasFetchedData.current) return;
       hasFetchedData.current = true;
 
       try {
-        console.log("Fetching session data...");
         const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
         if (sessionError || !sessionData?.session) {
           console.error("Failed to fetch session:", sessionError);
@@ -31,25 +30,22 @@ function VerificationScreen() {
         const { user } = sessionData.session;
         setCurrentUserId(user.id);
 
-        console.log("Fetching user details from database for user ID:", user.id);
         const { data, error } = await supabase
           .from("users")
           .select("username, role")
           .eq("id", user.id)
           .single();
 
-        if (error) {
-          console.error("Database error fetching user details:", error);
-          throw new Error("Error checking user details in the database");
-        }
+        if (error) throw new Error("Error checking user details in the database");
 
-        console.log("Fetched user data:", data);
         setUserHasUsername(!!data?.username);
         setRole(data?.role);
 
         if (data?.username) {
+          // Determine redirect path based on role
+          const redirectPath = data?.role === 'admin' ? '/admin' : '/join-contests';
           setTimeout(() => {
-            navigate("/join-contests");
+            navigate(redirectPath);
           }, 1000);
         }
       } catch (err) {
@@ -63,7 +59,7 @@ function VerificationScreen() {
     fetchUserData();
 
     return () => {
-      hasFetchedData.current = false; // Reset fetch state
+      hasFetchedData.current = false;
     };
   }, [navigate]);
 
@@ -75,11 +71,11 @@ function VerificationScreen() {
         .update({ username })
         .eq("id", currentUserId);
 
-      if (error) {
-        throw new Error("Failed to save username");
-      }
+      if (error) throw new Error("Failed to save username");
 
-      navigate("/join-contests");
+      // Redirect based on role after username submission
+      const redirectPath = role === 'admin' ? '/admin' : '/join-contests';
+      navigate(redirectPath);
     } catch (err) {
       console.error("Error in handleUsernameSubmit:", err.message);
       setError(err.message || "An unexpected error occurred.");
@@ -101,7 +97,7 @@ function VerificationScreen() {
         {userHasUsername ? (
           <MainText
             header={`Welcome Back, ${role === "admin" ? "Admin" : "User"}!`}
-            subheader="Redirecting you to your dashboard..."
+            subheader={`Redirecting you to ${role === 'admin' ? 'the admin dashboard' : 'your contests'}...`}
           />
         ) : (
           <>
