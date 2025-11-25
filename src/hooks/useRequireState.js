@@ -1,6 +1,6 @@
 // src/hooks/useRequireState.js
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 /**
@@ -12,17 +12,14 @@ import { useNavigate, useLocation } from "react-router-dom";
 function useRequireState(requiredKeys = [], redirectPath = "/") {
   const location = useLocation();
   const navigate = useNavigate();
-  const state = location.state || {};
-
-  const hasAllKeys = requiredKeys.every((key) => key in state);
+  const state = useMemo(() => location.state || {}, [location.state]);
+  const hasAllKeys = useMemo(
+    () => requiredKeys.every((key) => key in state),
+    [requiredKeys, state]
+  );
 
   useEffect(() => {
     if (!hasAllKeys) {
-      console.warn(
-        `Missing required state keys: ${requiredKeys.filter((key) => !(key in state)).join(
-          ", "
-        )}. Redirecting to ${redirectPath}.`
-      );
       navigate(redirectPath, { replace: true });
     }
   }, [hasAllKeys, navigate, redirectPath, requiredKeys, state]);

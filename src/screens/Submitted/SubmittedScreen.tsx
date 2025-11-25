@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Header from '../../components/Header/Header';
 import MainText from '../../components/MainText/MainText';
 import styles from './SubmittedScreen.module.css';
@@ -64,7 +64,7 @@ function SubmittedScreen() {
   }, [questionId]);
 
   // Real-time listener for the correct_option field
-  const setupRealtimeListener = () => {
+  const setupRealtimeListener = useCallback(() => {
     if (!questionId) return () => {};
 
     const channel = supabase
@@ -79,10 +79,6 @@ function SubmittedScreen() {
         },
         (payload) => {
           const updatedCorrectOption = payload.new.correct_option;
-          console.log(
-            'Real-time update received. New correct_option:',
-            updatedCorrectOption
-          );
 
           if (updatedCorrectOption !== null) {
             setCorrectAnswer(updatedCorrectOption);
@@ -95,21 +91,19 @@ function SubmittedScreen() {
     return () => {
       supabase.removeChannel(channel);
     };
-  };
+  }, [questionId]);
 
   useEffect(() => {
     const cleanup = setupRealtimeListener();
     return () => {
       cleanup && cleanup();
     };
-  }, [questionId]);
+  }, [setupRealtimeListener]);
 
   // Handle visibility changes to re-establish connection
   useEffect(() => {
     const handleVisibilityChange = async () => {
       if (document.visibilityState === 'visible') {
-        console.log('Browser tab is active again. Checking for updates...');
-
         // Perform a manual poll to fetch the latest correct_option
         try {
           const { data, error } = await supabase
@@ -128,8 +122,6 @@ function SubmittedScreen() {
             setStatusChecked(true);
           }
 
-          // Re-establish the real-time listener
-          console.log('Re-establishing real-time listener');
           setupRealtimeListener();
         } catch (err) {
           console.error('Error fetching correct answer during visibility check:', (err as Error).message);
@@ -142,25 +134,15 @@ function SubmittedScreen() {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [questionId]);
+  }, [questionId, setupRealtimeListener]);
 
   // Evaluate the user's answer when the correct answer is set
   useEffect(() => {
     if (statusChecked && !hasNavigated) {
-      console.log("Evaluating answer...");
-      console.log(
-        'User answer:',
-        selectedAnswer,
-        'Correct answer:',
-        correctAnswer
-      );
-
       if (selectedAnswer === correctAnswer) {
-        console.log('Answer is correct. Navigating to /correct...');
         setHasNavigated(true);
         navigate('/correct', { replace: true, state: { contest, questionId } });
       } else {
-        console.log('Answer is incorrect. Navigating to /eliminated...');
         setHasNavigated(true);
         navigate('/eliminated', {
           replace: true,

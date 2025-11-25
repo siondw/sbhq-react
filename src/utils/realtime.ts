@@ -9,7 +9,7 @@ interface RealtimeConfig {
   schema: string;
   table: string;
   filter?: string;
-  callback: (payload: any) => void;
+  callback: (payload: unknown) => void;
 }
 
 export function useRealtime({
@@ -21,12 +21,11 @@ export function useRealtime({
   callback,
 }: RealtimeConfig) {
   useEffect(() => {
-    // Supabase JS types don't expose postgres_changes on channel in this setup; cast to any.
-    // TODO: Replace any-casts with concrete payload/filter types once Supabase typings are aligned.
-    const channel = (supabase.channel(channelName) as any).on(
+    const channel = supabase.channel(channelName);
+    channel.on(
       'postgres_changes',
       { event, schema, table, filter },
-      callback
+      callback as (payload: unknown) => void
     );
     channel.subscribe();
 

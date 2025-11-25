@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { supabase } from '../../supabase';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 import Header from '../../components/Header/Header';
 import MainText from '../../components/MainText/MainText';
 import GameStatsSummary from '../../components/GameStatsSummary/GameStatsSummary';
@@ -10,6 +11,14 @@ import styles from './CorrectScreen.module.css';
 import { useAuth } from '../../contexts/AuthContext';
 import useRequireState from '../../hooks/useRequireState';
 import type { ContestRow } from '../../types/sbhq';
+
+type Participant = {
+  id: string;
+  user_id: string;
+  active: boolean;
+  contest_id: string;
+  elimination_round: number | null;
+};
 
 function CorrectScreen() {
   const navigate = useNavigate();
@@ -53,20 +62,12 @@ function CorrectScreen() {
     };
 
     fetchOnMount();
-  }, [contest?.id, navigate, currentRound]);
+  }, [contest, navigate, currentRound]);
 
   useEffect(() => {
     if (!contest?.id || !user?.id) return;
 
     const fetchParticipants = async () => {
-      type Participant = {
-        id: string;
-        user_id: string;
-        active: boolean;
-        contest_id: string;
-        elimination_round: number | null;
-      };
-
       try {
         const { data: participants, error } = await supabase
           .from('participants')
@@ -93,13 +94,13 @@ function CorrectScreen() {
     };
 
     fetchParticipants();
-  }, [contest?.id, user?.id, navigate]);
+  }, [contest, user?.id, navigate]);
 
   useEffect(() => {
     if (!contest?.id || !user?.id) return;
 
-    const contestChannel = supabase
-      .channel(`contest-${contest.id}`)
+    const contestChannel = supabase.channel(`contest-${contest.id}`) as unknown as RealtimeChannel;
+    contestChannel
       .on(
         'postgres_changes',
         {
@@ -108,7 +109,7 @@ function CorrectScreen() {
           table: 'contests',
           filter: `id=eq.${contest.id}`,
         },
-        async (payload: any) => {
+        async (payload: { new: ContestRow }) => {
           const newSubmissionOpen = payload.new.submission_open;
 
           if (newSubmissionOpen === true) {
@@ -125,8 +126,8 @@ function CorrectScreen() {
       )
       .subscribe();
 
-    const participantsChannel = supabase
-      .channel(`participants-${contest.id}`)
+    const participantsChannel = supabase.channel(`participants-${contest.id}`) as RealtimeChannel;
+    participantsChannel
       .on(
         'postgres_changes',
         {
@@ -137,14 +138,6 @@ function CorrectScreen() {
         },
         async () => {
           try {
-            type Participant = {
-              id: string;
-              user_id: string;
-              active: boolean;
-              contest_id: string;
-              elimination_round: number | null;
-            };
-
             const { data: updatedParticipants, error } = await supabase
               .from('participants')
               .select('*')
@@ -173,7 +166,7 @@ function CorrectScreen() {
       supabase.removeChannel(contestChannel);
       supabase.removeChannel(participantsChannel);
     };
-  }, [contest?.id, user?.id, navigate]);
+  }, [contest, user?.id, navigate]);
 
   useEffect(() => {
     const blockBack = () => {

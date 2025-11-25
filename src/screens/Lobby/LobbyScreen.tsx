@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Header from '../../components/Header/Header';
 import MainText from '../../components/MainText/MainText';
@@ -6,6 +6,7 @@ import PlayerList from '../../components/PlayersList/PlayersList';
 import styles from './LobbyScreen.module.css';
 import { supabase } from '../../supabase';
 import type { ContestRow } from '../../types/sbhq';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 
 type LocationState = {
   contest: ContestRow;
@@ -27,12 +28,43 @@ function LobbyScreen() {
   const [timeRemaining, setTimeRemaining] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const fetchParticipants = useCallback(async () => {
+    if (!contest?.id) {
+      console.error('Contest ID is missing');
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('participants')
+        .select('user_id, active, users(username)')
+        .eq('contest_id', contest.id)
+        .eq('active', true);
+
+      if (error) throw error;
+
+      const activePlayers =
+        (data as ParticipantWithUser[] | null)
+          ?.flatMap((participant) => {
+            const userField = participant.users;
+            if (Array.isArray(userField)) {
+              return userField.map((u) => u?.username).filter(Boolean);
+            }
+            return userField?.username ? [userField.username] : [];
+          })
+          .filter((username): username is string => Boolean(username)) || [];
+      setPlayers(activePlayers);
+    } catch (err) {
+      console.error('Failed to fetch participants:', (err as Error).message);
+    }
+  }, [contest?.id]);
+
   useEffect(() => {
     if (!contest?.id) return;
 
     const setupRealtimeListener = () => {
-      // TODO: Replace any-cast once Supabase typings expose postgres_changes channel handler shape.
-      const channel = (supabase.channel(`contest-updates-${contest.id}`) as any)
+      const channel = supabase
+        .channel(`contest-updates-${contest.id}`)
         .on(
           'postgres_changes',
           {
@@ -41,8 +73,8 @@ function LobbyScreen() {
             table: 'contests',
             filter: `id=eq.${contest.id}`,
           },
-          (payload: any) => {
-            const updatedContest = payload.new as ContestRow;
+          (payload: { new: ContestRow }) => {
+            const updatedContest = payload.new;
             if (updatedContest?.submission_open) {
               navigate('/question', { state: { contest: updatedContest } });
             }
@@ -81,41 +113,10 @@ function LobbyScreen() {
 
     return () => {
       if (channel) {
-        supabase.removeChannel(channel);
+        supabase.removeChannel(channel as RealtimeChannel);
       }
     };
-  }, [contest, navigate]);
-
-  const fetchParticipants = async () => {
-    if (!contest?.id) {
-      console.error('Contest ID is missing');
-      return;
-    }
-
-    try {
-      const { data, error } = await supabase
-        .from('participants')
-        .select('user_id, active, users(username)')
-        .eq('contest_id', contest.id)
-        .eq('active', true);
-
-      if (error) throw error;
-
-      const activePlayers =
-        (data as ParticipantWithUser[] | null)
-          ?.flatMap((participant) => {
-            const userField = participant.users;
-            if (Array.isArray(userField)) {
-              return userField.map((u) => u?.username).filter(Boolean);
-            }
-            return userField?.username ? [userField.username] : [];
-          })
-          .filter((username): username is string => Boolean(username)) || [];
-      setPlayers(activePlayers);
-    } catch (err) {
-      console.error('Failed to fetch participants:', (err as Error).message);
-    }
-  };
+  }, [contest, navigate, fetchParticipants]);
 
   useEffect(() => {
     if (!contest?.start_time) return;

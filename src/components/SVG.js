@@ -10,7 +10,7 @@ import DollarSignIcon from "../assets/DollarSignIcon.svg";
 
 
 
-const MySvgComponent = ({ iconType, width, height, fill }) => {
+const MySvgComponent = ({ iconType, width, height }) => {
         let SvgIcon;
     
         switch (iconType) {

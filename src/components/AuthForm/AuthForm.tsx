@@ -20,8 +20,6 @@ function AuthForm() {
 
     try {
       const redirectUrl = process.env.REACT_APP_REDIRECT_URL;
-      console.log('Redirect URL:', redirectUrl);
-
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
