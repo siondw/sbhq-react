@@ -1,26 +1,39 @@
-// @ts-nocheck
-// TODO: Type modal props (question shape, contestId, callbacks) and remove ts-nocheck.
-// src/components/admin/InContest/QuestionModal/QuestionModal.js
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { supabase } from "../../../../supabase";
 import styles from "./QuestionModal.module.css";
+import { AdminQuestion } from "../CurrentQuestionView/CurrentQuestionView";
 
-function QuestionModal({ contestId, question, onClose, onSavedOrDeleted }) {
+interface QuestionModalProps {
+  contestId: string;
+  question: AdminQuestion | null;
+  onClose: () => void;
+  onSavedOrDeleted: () => void;
+}
+
+function QuestionModal({
+  contestId,
+  question,
+  onClose,
+  onSavedOrDeleted,
+}: QuestionModalProps) {
   const isEditing = !!question;
+  const initialOptions = Array.isArray(question?.options)
+    ? question.options
+    : Object.values(question?.options || {});
   const [round, setRound] = useState(question?.round || 1);
   const [questionText, setQuestionText] = useState(question?.question || "");
-  const [options, setOptions] = useState(question?.options || ["", "", "", ""]);
+  const [options, setOptions] = useState<string[]>(initialOptions || ["", "", "", ""]);
   const [correctOption, setCorrectOption] = useState(question?.correct_option || "");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
-  function handleOptionChange(e, idx) {
+  function handleOptionChange(e: React.ChangeEvent<HTMLInputElement>, idx: number) {
     const newOptions = [...options];
     newOptions[idx] = e.target.value;
     setOptions(newOptions);
   }
 
-  async function handleSubmit(e) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!questionText.trim()) {
       alert("Question text cannot be empty.");
@@ -55,8 +68,9 @@ function QuestionModal({ contestId, question, onClose, onSavedOrDeleted }) {
 
       onSavedOrDeleted();
     } catch (err) {
+      const message = err instanceof Error ? err.message : "Unknown error";
       console.error("Error saving question:", err);
-      setError(err.message);
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -77,8 +91,9 @@ function QuestionModal({ contestId, question, onClose, onSavedOrDeleted }) {
 
       onSavedOrDeleted();
     } catch (err) {
+      const message = err instanceof Error ? err.message : "Unknown error";
       console.error("Error deleting question:", err);
-      setError(err.message);
+      setError(message);
       setLoading(false);
     }
   }

@@ -1,18 +1,30 @@
-// @ts-nocheck
-// TODO: Type question shapes and Supabase calls; remove ts-nocheck.
 import React, { useState, useEffect, useCallback } from "react";
-import { supabase } from "../../../../supabase"; // adjust path
+import { supabase } from "../../../../supabase";
 import styles from "./CurrentQuestionView.module.css";
 
+export type AdminQuestion = {
+  id: string;
+  round: number;
+  question: string;
+  options: string[] | Record<string, string>;
+  correct_option: string | null;
+};
+
+interface CurrentQuestionViewProps {
+  roundNumber: number;
+  submissionOpen: boolean;
+  questions: AdminQuestion[];
+  onCreateQuestion: () => void;
+}
+
 function CurrentQuestionView({
-  contest,
   roundNumber,
   submissionOpen,
   questions,
   onCreateQuestion,
-}) {
+}: CurrentQuestionViewProps) {
   const [pendingCorrectOption, setPendingCorrectOption] = useState("");
-  const [answersDistribution, setAnswersDistribution] = useState({});
+  const [answersDistribution, setAnswersDistribution] = useState<Record<string, number>>({});
   const [totalAnswers, setTotalAnswers] = useState(0);
 
   // Identify the question for this round (may be undefined)
@@ -41,8 +53,8 @@ function CurrentQuestionView({
 
       if (error) throw error;
 
-      const counts = {};
-      answers.forEach((row) => {
+      const counts: Record<string, number> = {};
+      (answers as { answer: string | null }[] | null)?.forEach((row) => {
         const ans = row.answer || "No Answer";
         counts[ans] = (counts[ans] || 0) + 1;
       });
@@ -50,7 +62,7 @@ function CurrentQuestionView({
       console.log("Fetched Answers Distribution:", counts);
 
       setAnswersDistribution(counts);
-      setTotalAnswers(Object.values(counts).reduce((sum, val) => sum + val, 0));
+      setTotalAnswers(Object.values(counts).reduce((sum, val) => sum + (val || 0), 0));
     } catch (err) {
       console.error("Error fetching distribution:", err);
     }
@@ -103,6 +115,9 @@ function CurrentQuestionView({
   }
 
   const { question, options, correct_option } = currentQ;
+  const optionList: string[] = Array.isArray(options)
+    ? options
+    : Object.values(options || {});
 
   async function handleSetCorrectOption() {
     if (!pendingCorrectOption) {
@@ -121,8 +136,6 @@ function CurrentQuestionView({
       if (error) throw error;
 
       console.log("Correct option set successfully:", pendingCorrectOption);
-
-      currentQ.correct_option = pendingCorrectOption;
       setPendingCorrectOption("");
       alert("Correct option set!");
     } catch (err) {
@@ -150,7 +163,7 @@ function CurrentQuestionView({
       {submissionOpen ? (
         <div className={styles.openPhase}>
           <p>Submissions are open! (Real-time distribution):</p>
-          {options?.map((opt) => (
+          {optionList?.map((opt) => (
             <div key={opt} className={styles.optionRow}>
               <strong>{opt}:</strong> {answersDistribution[opt] || 0} response(s)
             </div>
@@ -165,7 +178,7 @@ function CurrentQuestionView({
             <>
               <p>Submissions closed. Set the correct option:</p>
               <div className={styles.optionsList}>
-                {options?.map((opt, idx) => (
+                {optionList?.map((opt, idx) => (
                   <label key={idx} className={styles.optionItem}>
                     <input
                       type="radio"

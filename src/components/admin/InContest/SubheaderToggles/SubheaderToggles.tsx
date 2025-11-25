@@ -1,8 +1,16 @@
-// src/components/admin/InContest/SubheaderToggles.js
-// @ts-nocheck
-// TODO: Add prop types for toggles/handlers and remove ts-nocheck.
 import React from "react";
 import styles from "./SubheaderToggles.module.css";
+
+interface SubheaderTogglesProps {
+  lobbyOpen: boolean;
+  submissionOpen: boolean;
+  finished: boolean;
+  onToggleLobby: () => void;
+  onToggleSubmission: () => void;
+  onToggleFinished: () => void;
+  roundNumber: number;
+  onIncrementRound: (delta: number) => void;
+}
 
 function SubheaderToggles({
   lobbyOpen,
@@ -13,13 +21,13 @@ function SubheaderToggles({
   onToggleFinished,
   roundNumber,
   onIncrementRound,
-}) {
+}: SubheaderTogglesProps) {
   return (
     <div className={styles.subheader}>
       <div className={styles.toggleItem}>
         <span>Lobby:</span>
-        <button 
-          onClick={onToggleLobby} 
+        <button
+          onClick={onToggleLobby}
           className={styles.toggleButton}
           data-active={lobbyOpen}
         >
@@ -28,8 +36,8 @@ function SubheaderToggles({
       </div>
       <div className={styles.toggleItem}>
         <span>Submissions:</span>
-        <button 
-          onClick={onToggleSubmission} 
+        <button
+          onClick={onToggleSubmission}
           className={styles.toggleButton}
           data-submissions={submissionOpen}
         >
@@ -38,8 +46,8 @@ function SubheaderToggles({
       </div>
       <div className={styles.toggleItem}>
         <span>Finished:</span>
-        <button 
-          onClick={onToggleFinished} 
+        <button
+          onClick={onToggleFinished}
           className={styles.toggleButton}
           data-finished={finished}
         >
@@ -49,7 +57,6 @@ function SubheaderToggles({
 
       <div className={styles.roundContainer}>
         <span>Round: {roundNumber}</span>
-        {/* Up/down arrows */}
         <button onClick={() => onIncrementRound(+1)}>▲</button>
         <button onClick={() => onIncrementRound(-1)}>▼</button>
       </div>

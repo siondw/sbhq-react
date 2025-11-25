@@ -1,17 +1,20 @@
-// @ts-nocheck
-// TODO: Add props and form state types, then drop ts-nocheck.
 import React, { useState } from "react";
 import { supabase } from "../../../supabase";
 import styles from "./CreateContestModal.module.css";
 
-function CreateContestModal({ onClose, onCreated }) {
+interface CreateContestModalProps {
+  onClose: () => void;
+  onCreated: () => void;
+}
+
+function CreateContestModal({ onClose, onCreated }: CreateContestModalProps) {
   const [name, setName] = useState("");
   const [date, setDate] = useState(""); // Expected "YYYY-MM-DDTHH:mm"
   const [price, setPrice] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
-  async function handleSubmit(e) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
 
@@ -24,7 +27,8 @@ function CreateContestModal({ onClose, onCreated }) {
       setError("Please choose a date and time.");
       return;
     }
-    if (!price || isNaN(price)) {
+    const priceNumber = parseFloat(price);
+    if (!price || Number.isNaN(priceNumber)) {
       setError("Please provide a valid numeric price.");
       return;
     }
@@ -41,7 +45,7 @@ function CreateContestModal({ onClose, onCreated }) {
         {
           name: name.trim(),
           start_time: utcDate, // Save as UTC ISO string
-          price: parseFloat(price),
+          price: priceNumber,
           current_round: 0,
           finished: false,
           lobby_open: false,

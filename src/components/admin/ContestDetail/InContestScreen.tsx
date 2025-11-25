@@ -1,53 +1,47 @@
-// @ts-nocheck
-// TODO: Remove ts-nocheck by typing contest/question/participant shapes and callbacks.
-// src/components/admin/ContestDetail/InContestScreen.js
-import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom"; // Add useNavigate
+// src/components/admin/ContestDetail/InContestScreen.tsx
+import React, { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import styles from "./InContestScreen.module.css";
 
-// Fix relative paths to components
 import SubheaderToggles from "../InContest/SubheaderToggles/SubheaderToggles";
 import StatCard from "../InContest/StatCard/StatCard";
-import CurrentQuestionView from "../InContest/CurrentQuestionView/CurrentQuestionView";
-import QuestionsList from "../InContest/QuestionList/QuestionList"; // Fixed: QuestionList -> QuestionsList
+import CurrentQuestionView, {
+  AdminQuestion,
+} from "../InContest/CurrentQuestionView/CurrentQuestionView";
+import QuestionsList from "../InContest/QuestionList/QuestionList";
 import QuestionModal from "../InContest/QuestionModal/QuestionModal";
 
-// Fix supabase import path
 import { supabase } from "../../../supabase";
+import { ContestRow } from "../../../types/sbhq";
 
 function InContestScreen() {
-  const { id: contestId } = useParams();
-  const navigate = useNavigate(); // Add this near other hooks
+  const { id } = useParams<{ id: string }>();
+  const contestId = id ?? "";
+  const navigate = useNavigate();
 
-  // Contest data
-  const [contest, setContest] = useState(null);
+  const [contest, setContest] = useState<ContestRow | null>(null);
   const [loadingContest, setLoadingContest] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
-  // Toggles
   const [lobbyOpen, setLobbyOpen] = useState(false);
   const [submissionOpen, setSubmissionOpen] = useState(false);
   const [finished, setFinished] = useState(false);
-
-  // Round
   const [currentRound, setCurrentRound] = useState(0);
-
-  // Round for reinstatement function
   const [reinstateRound, setReinstateRound] = useState("");
-
-  // Participants count (only active participants)
   const [activeParticipants, setActiveParticipants] = useState(0);
 
-  // State for question modal (open/close) + "editing question" data
   const [showQuestionModal, setShowQuestionModal] = useState(false);
-  const [questionToEdit, setQuestionToEdit] = useState(null); // or null if "new question"
-
-  // We'll fetch the "questions" in a separate state
-  const [questions, setQuestions] = useState([]);
+  const [questionToEdit, setQuestionToEdit] = useState<AdminQuestion | null>(null);
+  const [questions, setQuestions] = useState<AdminQuestion[]>([]);
 
   // 1) Fetch the contest and participants on mount
   useEffect(() => {
     async function fetchContestData() {
+      if (!contestId) {
+        setError("Contest ID missing");
+        setLoadingContest(false);
+        return;
+      }
       try {
         // fetch the contest
         const { data: cData, error: cErr } = await supabase
@@ -57,11 +51,12 @@ function InContestScreen() {
           .single();
         if (cErr || !cData) throw cErr || new Error("Contest not found");
 
-        setContest(cData);
-        setLobbyOpen(cData.lobby_open);
-        setSubmissionOpen(cData.submission_open);
-        setFinished(cData.finished);
-        setCurrentRound(cData.current_round || 0);
+        const typedContest = cData as ContestRow;
+        setContest(typedContest);
+        setLobbyOpen(typedContest.lobby_open);
+        setSubmissionOpen(typedContest.submission_open);
+        setFinished(typedContest.finished);
+        setCurrentRound(typedContest.current_round || 0);
 
         // fetch active participants count
         const { count, error: pErr } = await supabase
@@ -76,8 +71,9 @@ function InContestScreen() {
           setActiveParticipants(count || 0);
         }
       } catch (err) {
+        const message = err instanceof Error ? err.message : "Unknown error";
         console.error("Error fetching contest data:", err);
-        setError(err.message);
+        setError(message);
       } finally {
         setLoadingContest(false);
       }
@@ -98,7 +94,7 @@ function InContestScreen() {
           table: "participants",
           filter: `contest_id=eq.${contestId}`,
         },
-        async (payload) => {
+        async () => {
           // You can inspect payload.old / payload.new if you want to be more specific
           // about changes to the 'active' field.
           // For instance:
@@ -138,10 +134,10 @@ function InContestScreen() {
           .order("round", { ascending: true });
         if (qErr) throw qErr;
         setQuestions(qData || []);
-      } catch (err) {
-        console.error("Error fetching questions:", err);
-      }
+    } catch (err) {
+      console.error("Error fetching questions:", err);
     }
+  }
     if (contestId) {
       fetchQuestions();
     }
@@ -176,7 +172,7 @@ function InContestScreen() {
   }
 
   // 4) Handle round change (manual up/down)
-  async function incrementRound(delta) {
+  async function incrementRound(delta: number) {
     const newRound = currentRound + delta;
     if (newRound < 0) return;
     setCurrentRound(newRound);
@@ -191,7 +187,7 @@ function InContestScreen() {
     setQuestionToEdit(null);
     setShowQuestionModal(true);
   }
-  function openEditQuestionModal(q) {
+  function openEditQuestionModal(q: AdminQuestion) {
     setQuestionToEdit(q);
     setShowQuestionModal(true);
   }
@@ -228,7 +224,8 @@ function InContestScreen() {
         );
       }
     } catch (err) {
-      console.error("Error:", err.message);
+      const message = err instanceof Error ? err.message : "Unknown error";
+      console.error("Error:", message);
     }
   }
 
@@ -243,7 +240,7 @@ function InContestScreen() {
         .eq("contest_id", contestId)
         .order("round", { ascending: true });
       if (qErr) throw qErr;
-      setQuestions(qData || []);
+      setQuestions((qData as AdminQuestion[]) || []);
     } catch (err) {
       console.error("Error refreshing questions:", err);
     }
@@ -302,7 +299,6 @@ function InContestScreen() {
         {/* Center area: Current question view */}
         <div className={styles.centerColumn}>
           <CurrentQuestionView
-            contest={contest}
             roundNumber={currentRound}
             submissionOpen={submissionOpen}
             questions={questions}

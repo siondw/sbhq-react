@@ -1,20 +1,22 @@
-// @ts-nocheck
-// TODO: Add question list prop types and drop ts-nocheck.
-// src/components/admin/InContest/QuestionList/QuestionList.js
 import React from "react";
 import styles from "./QuestionList.module.css";
+import { AdminQuestion } from "../CurrentQuestionView/CurrentQuestionView";
 
-function QuestionsList({ questions, onEditQuestion }) {
+interface QuestionsListProps {
+  questions: AdminQuestion[];
+  onEditQuestion: (question: AdminQuestion) => void;
+}
+
+function QuestionsList({ questions, onEditQuestion }: QuestionsListProps) {
   return (
     <div className={styles.questionsList}>
       <h3>All Questions</h3>
       {questions.map((q) => {
-        const correctOption = q.correctAnswer || null; // or however you store it
-        // Possibly stats: how many got it right/wrong?
+        const correctOption = q.correct_option || null;
         return (
           <div key={q.id} className={styles.questionItem}>
             <div>
-              <strong>Round {q.round}</strong>: {q.text}
+              <strong>Round {q.round}</strong>: {q.question}
             </div>
             {correctOption && (
               <div className={styles.correctLabel}>
