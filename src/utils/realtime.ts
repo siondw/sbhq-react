@@ -21,10 +21,13 @@ export function useRealtime({
   callback,
 }: RealtimeConfig) {
   useEffect(() => {
-    const channel = supabase
-      .channel(channelName)
-      .on('postgres_changes', { event, schema, table, filter }, callback)
-      .subscribe();
+    // Supabase JS types don't expose postgres_changes on channel in this setup; cast to any.
+    const channel = (supabase.channel(channelName) as any).on(
+      'postgres_changes',
+      { event, schema, table, filter },
+      callback
+    );
+    channel.subscribe();
 
     return () => {
       supabase.removeChannel(channel);
