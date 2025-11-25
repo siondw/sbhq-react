@@ -1,3 +1,4 @@
+// @ts-nocheck
 // src/components/admin/InContest/QuestionModal/QuestionModal.js
 import React, { useState, useEffect } from "react";
 import { supabase } from "../../../../supabase";

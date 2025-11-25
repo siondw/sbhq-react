@@ -1,17 +1,17 @@
-import React, { useState } from "react";
-import LargeButton from "../CustomButton/LargeButton";
-import styles from "./AuthForm.module.css";
-import { supabase } from "../../supabase";
+import React, { useState } from 'react';
+import LargeButton from '../CustomButton/LargeButton';
+import styles from './AuthForm.module.css';
+import { supabase } from '../../supabase';
 
 function AuthForm() {
-  const [email, setEmail] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
+  const [email, setEmail] = useState<string>('');
+  const [successMessage, setSuccessMessage] = useState<string>('');
+  const [errorMessage, setErrorMessage] = useState<string>('');
 
-  const handleEmailSubmit = async (event) => {
+  const handleEmailSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setSuccessMessage("");
-    setErrorMessage("");
+    setSuccessMessage('');
+    setErrorMessage('');
 
     if (!email.trim()) {
       setErrorMessage("Email is required.");
@@ -20,9 +20,9 @@ function AuthForm() {
 
     try {
       const redirectUrl = process.env.REACT_APP_REDIRECT_URL;
-      console.log("Redirect URL:", redirectUrl);
+      console.log('Redirect URL:', redirectUrl);
 
-      const { data, error } = await supabase.auth.signInWithOtp({
+      const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
           shouldCreateUser: true,
@@ -34,18 +34,16 @@ function AuthForm() {
         throw error;
       }
 
-      setSuccessMessage(
-        "Magic link sent! Check your email to log in or register."
-      );
+      setSuccessMessage('Magic link sent! Check your email to log in or register.');
     } catch (error) {
-      setErrorMessage(error.message || "Failed to send magic link.");
+      setErrorMessage((error as Error).message || 'Failed to send magic link.');
     }
   };
 
   const handleGoogleSignIn = async () => {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
+        provider: 'google',
         options: {
           redirectTo: process.env.REACT_APP_REDIRECT_URL,
         },
@@ -55,7 +53,7 @@ function AuthForm() {
         throw error;
       }
     } catch (error) {
-      setErrorMessage(error.message || "Failed to sign in with Google.");
+      setErrorMessage((error as Error).message || 'Failed to sign in with Google.');
     }
   };
 
@@ -76,7 +74,7 @@ function AuthForm() {
           className={styles.inputField}
           type="email"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
           placeholder="Email"
           required
         />

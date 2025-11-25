@@ -1,3 +1,4 @@
+// @ts-nocheck
 // src/components/admin/InContest/QuestionList/QuestionList.js
 import React from "react";
 import styles from "./QuestionList.module.css";

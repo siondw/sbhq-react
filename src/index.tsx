@@ -1,29 +1,33 @@
-import React from "react";
-import ReactDOM from "react-dom/client";
-import "./index.css";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import './index.css';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
 // Non-admin imports...
-import AuthScreen from "./screens/Auth/AuthScreen";
-import PregameScreen from "./screens/Pregame/PregameScreen";
-import QuestionScreen from "./screens/Question/QuestionScreen";
-import SubmittedScreen from "./screens/Submitted/SubmittedScreen";
-import CorrectScreen from "./screens/Correct/CorrectScreen";
-import EliminatedScreen from "./screens/Eliminated/EliminatedScreen";
-import VerificationScreen from "./screens/VerificationScreen/VerificationScreen";
-import LobbyScreen from "./screens/Lobby/LobbyScreen";
-import JoinContestsScreen from "./screens/JoinContests/JoinContestsScreen";
+import AuthScreen from './screens/Auth/AuthScreen';
+import PregameScreen from './screens/Pregame/PregameScreen';
+import QuestionScreen from './screens/Question/QuestionScreen';
+import SubmittedScreen from './screens/Submitted/SubmittedScreen';
+import CorrectScreen from './screens/Correct/CorrectScreen';
+import EliminatedScreen from './screens/Eliminated/EliminatedScreen';
+import VerificationScreen from './screens/VerificationScreen/VerificationScreen';
+import LobbyScreen from './screens/Lobby/LobbyScreen';
+import JoinContestsScreen from './screens/JoinContests/JoinContestsScreen';
 
-import { AuthProvider } from "./contexts/AuthContext";
-import ProtectedRoute from "./components/ProtectedRoute/ProtectedRoute"; // Import ProtectedRoute
-import reportWebVitals from "./reportWebVitals";
+import { AuthProvider } from './contexts/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute';
+import reportWebVitals from './reportWebVitals';
 
 // **Admin** imports
-import AdminScreen from "./screens/Admin/AdminScreen";
-import OverviewScreen from "./components/admin/Overview/OverviewScreen";
-import ContestDetail from "./components/admin/ContestDetail/InContestScreen";
+import AdminScreen from './screens/Admin/AdminScreen';
+import OverviewScreen from './components/admin/Overview/OverviewScreen';
+import ContestDetail from './components/admin/ContestDetail/InContestScreen';
 
-const root = ReactDOM.createRoot(document.getElementById("root"));
+const rootElement = document.getElementById('root');
+if (!rootElement) {
+  throw new Error('Root element #root not found');
+}
+const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
     <Router>

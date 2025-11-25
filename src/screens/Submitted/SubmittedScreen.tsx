@@ -1,39 +1,37 @@
-import React, { useState, useEffect } from "react";
-import Header from "../../components/Header/Header";
-import MainText from "../../components/MainText/MainText";
-import styles from "./SubmittedScreen.module.css";
-import ballGif from "../../assets/ball.gif";
-import { useNavigate, useLocation } from "react-router-dom";
-import { supabase } from "../../supabase";
+import React, { useEffect, useState } from 'react';
+import Header from '../../components/Header/Header';
+import MainText from '../../components/MainText/MainText';
+import styles from './SubmittedScreen.module.css';
+import ballGif from '../../assets/ball.gif';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { supabase } from '../../supabase';
+import type { ContestRow } from '../../types/sbhq';
+
+type SubmittedState = {
+  contest?: ContestRow;
+  questionId?: string;
+  selectedAnswer?: string;
+  userId?: string;
+};
 
 function SubmittedScreen() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  console.log("SubmittedScreen mounted with raw state:", location.state);
+  const { contest, questionId, selectedAnswer } = (location.state as SubmittedState) || {};
 
-  const { contest, questionId, selectedAnswer, userId } = location.state || {};
-
-  console.log("Destructured state values:", {
-    contest,
-    questionId,
-    selectedAnswer,
-    userId,
-    hasState: !!location.state,
-  });
-
-  const [correctAnswer, setCorrectAnswer] = useState(null);
+  const [correctAnswer, setCorrectAnswer] = useState<string | null>(null);
   const [statusChecked, setStatusChecked] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const [hasNavigated, setHasNavigated] = useState(false);
 
   // Validate required state and redirect if missing
   useEffect(() => {
     if (!contest?.id || !questionId || selectedAnswer === undefined) {
-      console.error("Missing required data in location.state. Redirecting to /...");
-      navigate("/", {
+      console.error('Missing required data in location.state. Redirecting to /...');
+      navigate('/', {
         replace: true,
-        state: { message: "Invalid submission data." },
+        state: { message: 'Invalid submission data.' },
       });
     }
   }, [contest, questionId, selectedAnswer, navigate]);
@@ -45,9 +43,9 @@ function SubmittedScreen() {
     const fetchCorrectAnswer = async () => {
       try {
         const { data, error } = await supabase
-          .from("questions")
-          .select("correct_option")
-          .eq("id", questionId)
+          .from('questions')
+          .select('correct_option')
+          .eq('id', questionId)
           .single();
 
         if (error) throw error;
@@ -57,8 +55,8 @@ function SubmittedScreen() {
           setStatusChecked(true);
         }
       } catch (err) {
-        console.error("Error fetching correct answer:", err.message);
-        setError("Error fetching correct answer.");
+        console.error('Error fetching correct answer:', (err as Error).message);
+        setError('Error fetching correct answer.');
       }
     };
 
@@ -67,22 +65,22 @@ function SubmittedScreen() {
 
   // Real-time listener for the correct_option field
   const setupRealtimeListener = () => {
-    if (!questionId) return;
+    if (!questionId) return () => {};
 
     const channel = supabase
       .channel(`question-${questionId}`)
       .on(
-        "postgres_changes",
+        'postgres_changes',
         {
-          event: "UPDATE",
-          schema: "public",
-          table: "questions",
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'questions',
           filter: `id=eq.${questionId}`,
         },
         (payload) => {
           const updatedCorrectOption = payload.new.correct_option;
           console.log(
-            "Real-time update received. New correct_option:",
+            'Real-time update received. New correct_option:',
             updatedCorrectOption
           );
 
@@ -95,31 +93,33 @@ function SubmittedScreen() {
       .subscribe();
 
     return () => {
-      console.log("Unsubscribing from real-time updates");
       supabase.removeChannel(channel);
     };
   };
 
   useEffect(() => {
-    setupRealtimeListener();
+    const cleanup = setupRealtimeListener();
+    return () => {
+      cleanup && cleanup();
+    };
   }, [questionId]);
 
   // Handle visibility changes to re-establish connection
   useEffect(() => {
     const handleVisibilityChange = async () => {
-      if (document.visibilityState === "visible") {
-        console.log("Browser tab is active again. Checking for updates...");
+      if (document.visibilityState === 'visible') {
+        console.log('Browser tab is active again. Checking for updates...');
 
         // Perform a manual poll to fetch the latest correct_option
         try {
           const { data, error } = await supabase
-            .from("questions")
-            .select("correct_option")
-            .eq("id", questionId)
+            .from('questions')
+            .select('correct_option')
+            .eq('id', questionId)
             .single();
 
           if (error) {
-            console.error("Error during manual poll:", error);
+            console.error('Error during manual poll:', error);
             return;
           }
 
@@ -129,18 +129,18 @@ function SubmittedScreen() {
           }
 
           // Re-establish the real-time listener
-          console.log("Re-establishing real-time listener");
+          console.log('Re-establishing real-time listener');
           setupRealtimeListener();
         } catch (err) {
-          console.error("Error fetching correct answer during visibility check:", err.message);
+          console.error('Error fetching correct answer during visibility check:', (err as Error).message);
         }
       }
     };
 
-    document.addEventListener("visibilitychange", handleVisibilityChange);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [questionId]);
 
@@ -149,20 +149,20 @@ function SubmittedScreen() {
     if (statusChecked && !hasNavigated) {
       console.log("Evaluating answer...");
       console.log(
-        "User answer:",
+        'User answer:',
         selectedAnswer,
-        "Correct answer:",
+        'Correct answer:',
         correctAnswer
       );
 
       if (selectedAnswer === correctAnswer) {
-        console.log("Answer is correct. Navigating to /correct...");
+        console.log('Answer is correct. Navigating to /correct...');
         setHasNavigated(true);
-        navigate("/correct", { replace: true, state: { contest, questionId } });
+        navigate('/correct', { replace: true, state: { contest, questionId } });
       } else {
-        console.log("Answer is incorrect. Navigating to /eliminated...");
+        console.log('Answer is incorrect. Navigating to /eliminated...');
         setHasNavigated(true);
-        navigate("/eliminated", {
+        navigate('/eliminated', {
           replace: true,
           state: { contest, questionId },
         });
@@ -189,10 +189,10 @@ function SubmittedScreen() {
       <div className={styles.gifContainer}>
         <img
           src={ballGif}
-          alt="Awaiting results"
-          className={styles.ballGif}
-          style={{ width: 250, height: 250 }}
-        />
+      alt="Awaiting results"
+      className={styles.ballGif}
+      style={{ width: 250, height: 250 }}
+    />
       </div>
 
       {/* Display error message if any */}

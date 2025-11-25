@@ -1,24 +1,32 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import Header from "../../components/Header/Header";
-import MainText from "../../components/MainText/MainText";
-import AnswersContainer from "../../components/AnswersContainer/AnswersContainer";
-import styles from "./QuestionScreen.module.css";
-import { useAuth } from "../../contexts/AuthContext";
-import useRequireState from "../../hooks/useRequireState";
-import { supabase } from "../../supabase";
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import Header from '../../components/Header/Header';
+import MainText from '../../components/MainText/MainText';
+import AnswersContainer from '../../components/AnswersContainer/AnswersContainer';
+import styles from './QuestionScreen.module.css';
+import { useAuth } from '../../contexts/AuthContext';
+import useRequireState from '../../hooks/useRequireState';
+import { supabase } from '../../supabase';
+import type { ContestRow } from '../../types/sbhq';
+
+type Question = {
+  id: string;
+  question: string;
+  options: string[];
+  round: number;
+};
 
 function QuestionScreen() {
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
-  const { contest } = useRequireState(["contest"], "/login");
+  const { user, isLoading: authLoading } = useAuth();
+  const { contest } = useRequireState(['contest'], '/login') as { contest: ContestRow };
 
   const [submissionsOpen, setSubmissionsOpen] = useState(true);
-  const [questions, setQuestions] = useState([]);
+  const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [loadingQuestions, setLoadingQuestions] = useState(true);
-  const [errorFetchingQuestions, setErrorFetchingQuestions] = useState(null);
-  const [currentRound, setCurrentRound] = useState(null);
+  const [errorFetchingQuestions, setErrorFetchingQuestions] = useState<string | null>(null);
+  const [currentRound, setCurrentRound] = useState<number | null>(null);
 
   // We'll store a local error message if an inactive user tries to submit
   const [inactiveError, setInactiveError] = useState("");
@@ -26,41 +34,40 @@ function QuestionScreen() {
   // 1) On mount, fetch the current contest data & questions
   useEffect(() => {
     if (!contest) {
-      console.error("Contest data is missing.");
+      console.error('Contest data is missing.');
       return;
     }
 
     const fetchContestData = async () => {
-      console.log("Fetching contest data...");
+      console.log('Fetching contest data...');
       try {
         const { data: contestData, error: contestError } = await supabase
-          .from("contests")
-          .select("submission_open, current_round")
-          .eq("id", contest.id)
+          .from('contests')
+          .select('submission_open, current_round')
+          .eq('id', contest.id)
           .single();
 
-        console.log("Contest data fetched:", contestData);
+        console.log('Contest data fetched:', contestData);
 
         if (contestError) throw contestError;
 
         setSubmissionsOpen(contestData.submission_open);
         setCurrentRound(contestData.current_round);
 
-        // If submissions are closed, auto-submit blank & go to eliminated
         if (!contestData.submission_open) {
-          console.log("Submissions are closed, handling blank submission...");
+          console.log('Submissions are closed, handling blank submission...');
           await handleBlankSubmission();
-          navigate("/eliminated", { state: { contest } });
+          navigate('/eliminated', { state: { contest } });
           return;
         }
 
         const { data: questionsData, error: questionsError } = await supabase
-          .from("questions")
-          .select("id, question, options, round")
-          .eq("contest_id", contest.id)
-          .eq("round", contestData.current_round);
+          .from('questions')
+          .select('id, question, options, round')
+          .eq('contest_id', contest.id)
+          .eq('round', contestData.current_round);
 
-        console.log("Questions data fetched:", questionsData);
+        console.log('Questions data fetched:', questionsData);
 
         if (questionsError) throw questionsError;
 
@@ -68,11 +75,11 @@ function QuestionScreen() {
           setQuestions([]);
           setErrorFetchingQuestions("No questions found for this round.");
         } else {
-          setQuestions(questionsData);
+          setQuestions(questionsData as Question[]);
         }
       } catch (err) {
-        console.error("Error fetching contest data:", err.message);
-        setErrorFetchingQuestions("There was an error fetching contest data.");
+        console.error('Error fetching contest data:', (err as Error).message);
+        setErrorFetchingQuestions('There was an error fetching contest data.');
       } finally {
         setLoadingQuestions(false);
       }
@@ -84,20 +91,20 @@ function QuestionScreen() {
     const contestChannel = supabase
       .channel(`contest-${contest.id}`)
       .on(
-        "postgres_changes",
+        'postgres_changes',
         {
-          event: "UPDATE",
-          schema: "public",
-          table: "contests",
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'contests',
           filter: `id=eq.${contest.id}`,
         },
         async (payload) => {
-          console.log("Real-time update received:", payload);
+          console.log('Real-time update received:', payload);
 
           if (payload.new.submission_open === false) {
-            console.log("Submissions closed via real-time update.");
+            console.log('Submissions closed via real-time update.');
             await handleBlankSubmission();
-            navigate("/eliminated", { state: { contest } });
+            navigate('/eliminated', { state: { contest } });
           }
         }
       )
@@ -109,33 +116,38 @@ function QuestionScreen() {
   }, [contest, navigate, user?.id]);
 
   // 4) Handle Submit
-  const handleSubmit = async (selectedAnswer, questionId) => {
-    console.log("Submit initiated with answer:", selectedAnswer, "for question:", questionId);
-    setInactiveError("");
+  const handleSubmit = async (selectedAnswer: string, questionId: string) => {
+    console.log('Submit initiated with answer:', selectedAnswer, 'for question:', questionId);
+    setInactiveError('');
+
+    if (!user) {
+      alert('You must be logged in to submit.');
+      return;
+    }
   
     if (!selectedAnswer) {
-      alert("Please select an answer before submitting.");
+      alert('Please select an answer before submitting.');
       return;
     }
   
     try {
       const { data: participant, error: participantError } = await supabase
-        .from("participants")
-        .select("id, active")
-        .eq("user_id", user.id)
-        .eq("contest_id", contest.id)
+        .from('participants')
+        .select('id, active')
+        .eq('user_id', user.id)
+        .eq('contest_id', contest.id)
         .single();
   
       if (participantError || !participant) {
-        throw new Error("Could not find participant information.");
+        throw new Error('Could not find participant information.');
       }
   
       if (!participant.active) {
-        setInactiveError("You are no longer active in this contest.");
+        setInactiveError('You are no longer active in this contest.');
         return;
       }
   
-      const { error: answerError } = await supabase.from("answers").insert({
+      const { error: answerError } = await supabase.from('answers').insert({
         contest_id: contest.id,
         participant_id: participant.id,
         round: currentRound,
@@ -145,11 +157,11 @@ function QuestionScreen() {
       });
   
       if (answerError) {
-        throw new Error("Failed to submit the answer.");
+        throw new Error('Failed to submit the answer.');
       }
   
-      console.log("Answer submitted successfully.");
-      navigate("/submitted", {
+      console.log('Answer submitted successfully.');
+      navigate('/submitted', {
         state: {
           contest,
           questionId,
@@ -158,31 +170,33 @@ function QuestionScreen() {
         },
       });
     } catch (err) {
-      console.error("Error during submission:", err.message);
-      alert("There was an error submitting your answer. Please try again.");
+      console.error('Error during submission:', (err as Error).message);
+      alert('There was an error submitting your answer. Please try again.');
     }
   };
   
 
   // 5) If submissions are closed, we do a blank submission and eliminate
   const handleBlankSubmission = async () => {
-    console.log("Submitting blank answer...");
+    if (!user) return;
+
+    console.log('Submitting blank answer...');
     try {
       const { data: participant, error: participantError } = await supabase
-        .from("participants")
-        .select("id, active")
-        .eq("user_id", user.id)
-        .eq("contest_id", contest.id)
+        .from('participants')
+        .select('id, active')
+        .eq('user_id', user.id)
+        .eq('contest_id', contest.id)
         .single();
 
       if (participantError || !participant) {
-        console.error("Participant not found for blank submission.");
+        console.error('Participant not found for blank submission.');
         return;
       }
 
       const participantId = participant.id;
 
-      const { error } = await supabase.from("answers").insert({
+      const { error } = await supabase.from('answers').insert({
         contest_id: contest.id,
         participant_id: participantId,
         round: currentRound,
@@ -191,12 +205,12 @@ function QuestionScreen() {
       });
 
       if (error) {
-        throw new Error("Failed to submit blank answer.");
+        throw new Error('Failed to submit blank answer.');
       }
 
-      console.log("Blank answer submitted successfully.");
+      console.log('Blank answer submitted successfully.');
     } catch (err) {
-      console.error("Error submitting blank answer:", err.message);
+      console.error('Error submitting blank answer:', (err as Error).message);
     }
   };
 
@@ -209,7 +223,7 @@ function QuestionScreen() {
   const currentQuestion = questions[currentQuestionIndex];
   const questionText = currentQuestion
     ? currentQuestion.question
-    : "No question available";
+    : 'No question available';
   const questionAnswers = currentQuestion ? currentQuestion.options : [];
 
   return (
@@ -231,7 +245,7 @@ function QuestionScreen() {
           {currentQuestion && (
             <AnswersContainer
               answers={questionAnswers}
-              onSubmit={(selectedAnswer) =>
+              onSubmit={(selectedAnswer: string) =>
                 handleSubmit(selectedAnswer, currentQuestion.id)
               }
             />

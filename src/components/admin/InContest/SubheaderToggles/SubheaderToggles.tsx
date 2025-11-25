@@ -1,4 +1,5 @@
 // src/components/admin/InContest/SubheaderToggles.js
+// @ts-nocheck
 import React from "react";
 import styles from "./SubheaderToggles.module.css";
 

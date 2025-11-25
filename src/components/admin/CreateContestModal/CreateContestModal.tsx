@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useState } from "react";
 import { supabase } from "../../../supabase";
 import styles from "./CreateContestModal.module.css";

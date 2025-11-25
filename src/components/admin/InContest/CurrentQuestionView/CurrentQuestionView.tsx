@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useState, useEffect, useCallback } from "react";
 import { supabase } from "../../../../supabase"; // adjust path
 import styles from "./CurrentQuestionView.module.css";

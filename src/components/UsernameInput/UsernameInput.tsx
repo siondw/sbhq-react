@@ -1,18 +1,22 @@
-import React, { useState } from "react";
-import LargeButton from "../CustomButton/LargeButton";
-import styles from "./UsernameInput.module.css";
+import React, { useState } from 'react';
+import LargeButton from '../CustomButton/LargeButton';
+import styles from './UsernameInput.module.css';
 
-function UsernameInput({ onSubmit }) {
-  const [username, setUsername] = useState("");
-  const [error, setError] = useState("");
+interface UsernameInputProps {
+  onSubmit: (username: string) => void;
+}
 
-  const handleSubmit = (e) => {
+function UsernameInput({ onSubmit }: UsernameInputProps) {
+  const [username, setUsername] = useState<string>('');
+  const [error, setError] = useState<string>('');
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!username.trim()) {
-      setError("Username cannot be empty.");
+      setError('Username cannot be empty.');
       return;
     }
-    setError("");
+    setError('');
     onSubmit(username.trim());
   };
 
