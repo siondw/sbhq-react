@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import type { RealtimePostgresChangesPayload, RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from '../supabase';
 
 type PostgresEvent = 'INSERT' | 'UPDATE' | 'DELETE' | '*';
@@ -9,7 +10,7 @@ interface RealtimeConfig {
   schema: string;
   table: string;
   filter?: string;
-  callback: (payload: unknown) => void;
+  callback: (payload: RealtimePostgresChangesPayload<Record<string, unknown>>) => void;
 }
 
 export function useRealtime({
@@ -21,14 +22,20 @@ export function useRealtime({
   callback,
 }: RealtimeConfig) {
   useEffect(() => {
-    // Supabase JS types don't expose postgres_changes on channel in this setup; cast to any.
     const channel = supabase.channel(channelName);
-    (channel as any)
-      .on('postgres_changes', { event, schema, table, filter }, callback)
-      .subscribe();
+    const typedChannel = channel as unknown as {
+      on: (
+        event: 'postgres_changes',
+        opts: { event: PostgresEvent; schema: string; table: string; filter?: string },
+        cb: RealtimeConfig['callback']
+      ) => RealtimeChannel;
+      subscribe: () => void;
+    };
+
+    typedChannel.on('postgres_changes', { event, schema, table, filter }, callback).subscribe();
 
     return () => {
-      supabase.removeChannel(channel as any);
+      supabase.removeChannel(channel);
     };
   }, [channelName, event, schema, table, filter, callback]);
 }
