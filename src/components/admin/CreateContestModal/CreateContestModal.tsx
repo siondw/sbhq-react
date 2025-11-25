@@ -1,4 +1,5 @@
 // @ts-nocheck
+// TODO: Add props and form state types, then drop ts-nocheck.
 import React, { useState } from "react";
 import { supabase } from "../../../supabase";
 import styles from "./CreateContestModal.module.css";

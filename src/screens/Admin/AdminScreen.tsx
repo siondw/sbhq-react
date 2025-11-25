@@ -1,4 +1,5 @@
 // @ts-nocheck
+// TODO: Add props (none today) and remove ts-nocheck after typing children/layout.
 // src/screens/Admin/AdminScreen.js
 import React from "react";
 import { Outlet } from "react-router-dom";

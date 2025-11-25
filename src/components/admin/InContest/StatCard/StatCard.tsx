@@ -1,4 +1,5 @@
 // @ts-nocheck
+// TODO: Type props (value/label) and remove ts-nocheck.
 // src/components/admin/InContest/StatCard.js
 import React from "react";
 import styles from "./StatCard.module.css";

@@ -1,4 +1,5 @@
 // @ts-nocheck
+// TODO: Type contest list/fetch handlers and remove ts-nocheck.
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../../../supabase";

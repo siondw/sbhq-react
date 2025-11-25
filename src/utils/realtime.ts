@@ -22,6 +22,7 @@ export function useRealtime({
 }: RealtimeConfig) {
   useEffect(() => {
     // Supabase JS types don't expose postgres_changes on channel in this setup; cast to any.
+    // TODO: Replace any-casts with concrete payload/filter types once Supabase typings are aligned.
     const channel = (supabase.channel(channelName) as any).on(
       'postgres_changes',
       { event, schema, table, filter },

@@ -1,4 +1,5 @@
 // @ts-nocheck
+// TODO: Type modal props (question shape, contestId, callbacks) and remove ts-nocheck.
 // src/components/admin/InContest/QuestionModal/QuestionModal.js
 import React, { useState, useEffect } from "react";
 import { supabase } from "../../../../supabase";

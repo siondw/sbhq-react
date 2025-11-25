@@ -1,4 +1,5 @@
 // @ts-nocheck
+// TODO: Remove ts-nocheck by typing contest/question/participant shapes and callbacks.
 // src/components/admin/ContestDetail/InContestScreen.js
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom"; // Add useNavigate

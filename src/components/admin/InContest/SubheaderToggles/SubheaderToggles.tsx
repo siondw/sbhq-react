@@ -1,5 +1,6 @@
 // src/components/admin/InContest/SubheaderToggles.js
 // @ts-nocheck
+// TODO: Add prop types for toggles/handlers and remove ts-nocheck.
 import React from "react";
 import styles from "./SubheaderToggles.module.css";
 
