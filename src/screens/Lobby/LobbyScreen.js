@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Header from "../../components/Header/Header";
 import MainText from "../../components/MainText/MainText";
@@ -13,6 +13,51 @@ function LobbyScreen() {
   const gradientStyle = "linear-gradient(167deg, #54627B, #303845)";
   const [players, setPlayers] = useState([]);
   const [timeRemaining, setTimeRemaining] = useState(0);
+
+  const fetchParticipants = useCallback(async () => {
+    if (!contest?.id) {
+      console.error("Contest ID is missing");
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from("participants")
+        .select("user_id, active, users(username)")
+        .eq("contest_id", contest.id)
+        .eq("active", true);
+
+      if (error) throw error;
+
+      const activePlayers =
+        data?.map((participant) => participant.users.username) || [];
+      setPlayers(activePlayers);
+    } catch (err) {
+      console.error("Failed to fetch participants:", err.message);
+    }
+  }, [contest?.id]);
+
+  const setupRealtimeListener = useCallback(() => {
+    if (!contest?.id) return null;
+    return supabase
+      .channel(`contest-updates-${contest.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "contests",
+          filter: `id=eq.${contest.id}`,
+        },
+        (payload) => {
+          const updatedContest = payload.new;
+          if (updatedContest?.submission_open) {
+            navigate("/question", { state: { contest: updatedContest } });
+          }
+        }
+      )
+      .subscribe();
+  }, [contest, navigate]);
 
   // Listen for updates to 'submission_open' in the current contest
   useEffect(() => {
@@ -34,65 +79,29 @@ function LobbyScreen() {
         if (data?.submission_open) {
           navigate("/question", { state: { contest } });
         } else {
-          setupRealtimeListener();
+          const subscription = setupRealtimeListener();
           fetchParticipants();
+
+          return () => {
+            if (subscription) supabase.removeChannel(subscription);
+          };
         }
       } catch (err) {
         console.error("Failed to check submission_open:", err.message);
       }
+      return undefined;
     };
 
-    const setupRealtimeListener = () => {
-      supabase
-        .channel(`contest-updates-${contest.id}`)
-        .on(
-          "postgres_changes",
-          {
-            event: "UPDATE",
-            schema: "public",
-            table: "contests",
-            filter: `id=eq.${contest.id}`,
-          },
-          (payload) => {
-            const updatedContest = payload.new;
-            if (updatedContest?.submission_open) {
-              navigate("/question", { state: { contest: updatedContest } });
-            }
-          }
-        )
-        .subscribe();
-    };
-
-    checkSubmissionOpen();
+    const cleanup = checkSubmissionOpen();
 
     return () => {
-      supabase.removeChannel(`contest-updates-${contest.id}`);
+      if (cleanup) {
+        cleanup();
+      } else {
+        supabase.removeChannel(`contest-updates-${contest.id}`);
+      }
     };
-  }, [contest?.id, navigate]);
-
-  // Fetch participants from Supabase
-  const fetchParticipants = async () => {
-    if (!contest?.id) {
-      console.error("Contest ID is missing");
-      return;
-    }
-
-    try {
-      const { data, error } = await supabase
-        .from("participants")
-        .select("user_id, active, users(username)")
-        .eq("contest_id", contest.id)
-        .eq("active", true);
-
-      if (error) throw error;
-
-      const activePlayers =
-        data?.map((participant) => participant.users.username) || [];
-      setPlayers(activePlayers);
-    } catch (err) {
-      console.error("Failed to fetch participants:", err.message);
-    }
-  };
+  }, [contest, contest?.id, fetchParticipants, navigate, setupRealtimeListener]);
 
   // Update countdown timer
   useEffect(() => {

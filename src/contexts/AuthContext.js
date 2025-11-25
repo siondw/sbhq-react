@@ -14,17 +14,12 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        console.log("Fetching session data...");
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) {
-          console.error("Error fetching session data:", error);
           throw error;
         }
 
-        console.log("Session fetched:", session);
-
         if (session?.user) {
-          console.log("Fetching role for user ID:", session.user.id);
           const { data, error: roleError } = await supabase
             .from("users")
             .select("role")
@@ -32,11 +27,8 @@ export const AuthProvider = ({ children }) => {
             .single();
 
           if (roleError) {
-            console.error("Error fetching user role:", roleError);
             throw new Error("Failed to fetch user role");
           }
-
-          console.log("User role fetched:", data?.role);
 
           setAuthState({
             user: session.user,
@@ -47,7 +39,7 @@ export const AuthProvider = ({ children }) => {
           resetAuthState();
         }
       } catch (err) {
-        console.error("Error initializing authentication:", err.message);
+        console.error("Error initializing authentication:", err?.message || err);
         resetAuthState();
       } finally {
         setIsLoading(false);
@@ -57,7 +49,6 @@ export const AuthProvider = ({ children }) => {
     initializeAuth();
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log("Auth state changed:", _event, session);
       if (session?.user) {
         setAuthState((current) => ({
           ...current,
@@ -71,13 +62,11 @@ export const AuthProvider = ({ children }) => {
     });
 
     return () => {
-      console.log("Cleaning up auth state change listener...");
       listener?.subscription?.unsubscribe();
     };
   }, []);
 
   const resetAuthState = () => {
-    console.log("Resetting auth state...");
     setAuthState({
       user: null,
       session: null,

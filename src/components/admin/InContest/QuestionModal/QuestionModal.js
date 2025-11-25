@@ -1,5 +1,5 @@
 // src/components/admin/InContest/QuestionModal/QuestionModal.js
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { supabase } from "../../../../supabase";
 import styles from "./QuestionModal.module.css";
 

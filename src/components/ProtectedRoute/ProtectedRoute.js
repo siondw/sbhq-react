@@ -5,9 +5,6 @@ import { useAuth } from "../../contexts/AuthContext";
 function ProtectedRoute({ adminOnly = false }) {
   const { user, role } = useAuth();
 
-  console.log("ProtectedRoute: User:", user);
-  console.log("ProtectedRoute: Role:", role);
-
   // Check if the user is authenticated
   if (!user) {
     return <Navigate to="/" replace />;

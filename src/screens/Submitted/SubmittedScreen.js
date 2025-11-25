@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Header from "../../components/Header/Header";
 import MainText from "../../components/MainText/MainText";
 import styles from "./SubmittedScreen.module.css";
@@ -10,17 +10,7 @@ function SubmittedScreen() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  console.log("SubmittedScreen mounted with raw state:", location.state);
-
-  const { contest, questionId, selectedAnswer, userId } = location.state || {};
-
-  console.log("Destructured state values:", {
-    contest,
-    questionId,
-    selectedAnswer,
-    userId,
-    hasState: !!location.state,
-  });
+  const { contest, questionId, selectedAnswer } = location.state || {};
 
   const [correctAnswer, setCorrectAnswer] = useState(null);
   const [statusChecked, setStatusChecked] = useState(false);
@@ -30,7 +20,6 @@ function SubmittedScreen() {
   // Validate required state and redirect if missing
   useEffect(() => {
     if (!contest?.id || !questionId || selectedAnswer === undefined) {
-      console.error("Missing required data in location.state. Redirecting to /...");
       navigate("/", {
         replace: true,
         state: { message: "Invalid submission data." },
@@ -66,8 +55,8 @@ function SubmittedScreen() {
   }, [questionId]);
 
   // Real-time listener for the correct_option field
-  const setupRealtimeListener = () => {
-    if (!questionId) return;
+  const setupRealtimeListener = useCallback(() => {
+    if (!questionId) return undefined;
 
     const channel = supabase
       .channel(`question-${questionId}`)
@@ -81,10 +70,6 @@ function SubmittedScreen() {
         },
         (payload) => {
           const updatedCorrectOption = payload.new.correct_option;
-          console.log(
-            "Real-time update received. New correct_option:",
-            updatedCorrectOption
-          );
 
           if (updatedCorrectOption !== null) {
             setCorrectAnswer(updatedCorrectOption);
@@ -95,21 +80,19 @@ function SubmittedScreen() {
       .subscribe();
 
     return () => {
-      console.log("Unsubscribing from real-time updates");
       supabase.removeChannel(channel);
     };
-  };
+  }, [questionId]);
 
   useEffect(() => {
-    setupRealtimeListener();
-  }, [questionId]);
+    const cleanup = setupRealtimeListener();
+    return cleanup;
+  }, [questionId, setupRealtimeListener]);
 
   // Handle visibility changes to re-establish connection
   useEffect(() => {
     const handleVisibilityChange = async () => {
       if (document.visibilityState === "visible") {
-        console.log("Browser tab is active again. Checking for updates...");
-
         // Perform a manual poll to fetch the latest correct_option
         try {
           const { data, error } = await supabase
@@ -128,8 +111,6 @@ function SubmittedScreen() {
             setStatusChecked(true);
           }
 
-          // Re-establish the real-time listener
-          console.log("Re-establishing real-time listener");
           setupRealtimeListener();
         } catch (err) {
           console.error("Error fetching correct answer during visibility check:", err.message);
@@ -142,25 +123,15 @@ function SubmittedScreen() {
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [questionId]);
+  }, [questionId, setupRealtimeListener]);
 
   // Evaluate the user's answer when the correct answer is set
   useEffect(() => {
     if (statusChecked && !hasNavigated) {
-      console.log("Evaluating answer...");
-      console.log(
-        "User answer:",
-        selectedAnswer,
-        "Correct answer:",
-        correctAnswer
-      );
-
       if (selectedAnswer === correctAnswer) {
-        console.log("Answer is correct. Navigating to /correct...");
         setHasNavigated(true);
         navigate("/correct", { replace: true, state: { contest, questionId } });
       } else {
-        console.log("Answer is incorrect. Navigating to /eliminated...");
         setHasNavigated(true);
         navigate("/eliminated", {
           replace: true,

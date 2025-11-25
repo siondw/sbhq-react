@@ -3,7 +3,6 @@ import { supabase } from "../../../../supabase"; // adjust path
 import styles from "./CurrentQuestionView.module.css";
 
 function CurrentQuestionView({
-  contest,
   roundNumber,
   submissionOpen,
   questions,
@@ -17,19 +16,12 @@ function CurrentQuestionView({
   const currentQ = questions.find((q) => q.round === roundNumber);
   const questionId = currentQ?.id;
 
-  // Log question and state info for debugging
-  console.log("Current Question ID:", questionId);
-  console.log("Current Answers Distribution:", answersDistribution);
-  console.log("Total Answers:", totalAnswers);
-
   // Fetch answers distribution
   const fetchAnswersDistribution = useCallback(async () => {
     if (!questionId) {
       console.warn("fetchAnswersDistribution: No question ID, skipping fetch.");
       return;
     }
-
-    console.log("Fetching answers distribution for question ID:", questionId);
 
     try {
       const { data: answers, error } = await supabase
@@ -45,8 +37,6 @@ function CurrentQuestionView({
         counts[ans] = (counts[ans] || 0) + 1;
       });
 
-      console.log("Fetched Answers Distribution:", counts);
-
       setAnswersDistribution(counts);
       setTotalAnswers(Object.values(counts).reduce((sum, val) => sum + val, 0));
     } catch (err) {
@@ -55,17 +45,12 @@ function CurrentQuestionView({
   }, [questionId]);
 
   useEffect(() => {
-    // Initial fetch
-    console.log("Running useEffect for initial data fetch and subscription.");
     fetchAnswersDistribution();
 
     if (!questionId) {
       console.warn("useEffect: No question ID, skipping subscription setup.");
       return;
     }
-
-    // Subscribe to real-time changes
-    console.log("Setting up real-time subscription for question ID:", questionId);
 
     const channel = supabase
       .channel(`answers-question-${questionId}`) // Updated channel name
@@ -77,21 +62,18 @@ function CurrentQuestionView({
           table: "answers",
           filter: `question_id=eq.${questionId}`, // Updated to filter by question_id
         },
-        (payload) => {
-          console.log("Real-time insert event received for question ID:", questionId, payload);
+        () => {
           fetchAnswersDistribution();
         }
       )
       .subscribe();
 
     return () => {
-      console.log("Cleaning up subscription for question ID:", questionId);
       supabase.removeChannel(channel);
     };
   }, [questionId, fetchAnswersDistribution]);
 
   if (!currentQ) {
-    console.log("No question for the current round:", roundNumber);
     return (
       <div className={styles.noQuestion}>
         <p>No question set for Round {roundNumber} yet.</p>
@@ -108,8 +90,6 @@ function CurrentQuestionView({
       return;
     }
 
-    console.log("Setting correct option:", pendingCorrectOption);
-
     try {
       const { error } = await supabase
         .from("questions")
@@ -117,8 +97,6 @@ function CurrentQuestionView({
         .eq("id", questionId);
 
       if (error) throw error;
-
-      console.log("Correct option set successfully:", pendingCorrectOption);
 
       currentQ.correct_option = pendingCorrectOption;
       setPendingCorrectOption("");
@@ -130,15 +108,6 @@ function CurrentQuestionView({
   }
 
   const total = totalAnswers;
-  let numCorrect = 0;
-  let numWrong = 0;
-
-  if (correct_option) {
-    numCorrect = answersDistribution[correct_option] || 0;
-    numWrong = total - numCorrect;
-
-    console.log(`Correct answers: ${numCorrect}, Wrong answers: ${numWrong}`);
-  }
 
   return (
     <div className={styles.currentQWrapper}>

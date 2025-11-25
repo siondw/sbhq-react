@@ -20,15 +20,12 @@ function EliminatedScreen() {
 
   useEffect(() => {
     if (!contest || !user) {
-      console.error("No contest data or user provided. Redirecting to home...");
       navigate("/", { replace: true });
       return;
     }
 
     const pollForReinstatement = async () => {
       try {
-        console.log(`Polling for participant status (attempt ${pollingCount + 1})...`);
-
         // Poll the participant's status
         const { data, error } = await supabase
           .from("participants")
@@ -42,10 +39,7 @@ function EliminatedScreen() {
           return;
         }
 
-        console.log("Participant status:", data);
-
         if (data?.active && data?.elimination_round === null && !hasNavigated) {
-          console.log("Participant reinstated! Navigating to /question...");
           setHasNavigated(true);
           navigate("/correct", { replace: true, state: { contest } });
         }
@@ -59,7 +53,6 @@ function EliminatedScreen() {
         pollForReinstatement();
         setPollingCount((prev) => prev + 1);
       } else {
-        console.log("Max polling attempts reached. Stopping.");
         clearInterval(interval);
       }
     }, pollingInterval);

@@ -9,7 +9,7 @@ interface RealtimeConfig {
   schema: string;
   table: string;
   filter?: string;
-  callback: (payload: any) => void;
+  callback: (payload: unknown) => void;
 }
 
 export function useRealtime({
@@ -22,15 +22,13 @@ export function useRealtime({
 }: RealtimeConfig) {
   useEffect(() => {
     // Supabase JS types don't expose postgres_changes on channel in this setup; cast to any.
-    const channel = (supabase.channel(channelName) as any).on(
-      'postgres_changes',
-      { event, schema, table, filter },
-      callback
-    );
-    channel.subscribe();
+    const channel = supabase.channel(channelName);
+    (channel as any)
+      .on('postgres_changes', { event, schema, table, filter }, callback)
+      .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(channel as any);
     };
   }, [channelName, event, schema, table, filter, callback]);
 }

@@ -10,7 +10,7 @@ import DollarSignIcon from "../assets/DollarSignIcon.svg";
 
 
 
-const MySvgComponent = ({ iconType, width, height, fill }) => {
+const MySvgComponent = ({ iconType, width = '50px', height = '50px' }) => {
         let SvgIcon;
     
         switch (iconType) {
@@ -55,12 +55,6 @@ const MySvgComponent = ({ iconType, width, height, fill }) => {
         }} 
       />
     );
-  };
-  
-  // Default props
-  MySvgComponent.defaultProps = {
-    width: '50px',
-    height: '50px',
   };
   
   export default MySvgComponent;

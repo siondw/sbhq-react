@@ -55,7 +55,7 @@ function CorrectScreen() {
     };
 
     fetchOnMount();
-  }, [contest?.id, navigate, currentRound]);
+  }, [contest, contest?.id, navigate, currentRound]);
 
   // 2) Fetch participants & see if user is still active
   useEffect(() => {
@@ -90,7 +90,7 @@ function CorrectScreen() {
     };
 
     fetchParticipants();
-  }, [contest?.id, user?.id, navigate]);
+  }, [contest, contest?.id, user?.id, navigate]);
 
   // 3) Subscribe to real-time updates in `contests` and `participants`
   useEffect(() => {
@@ -108,7 +108,6 @@ function CorrectScreen() {
           filter: `id=eq.${contest.id}`,
         },
         async (payload) => {
-          console.log("Contest payload:", payload);
           const newSubmissionOpen = payload.new.submission_open;
 
           if (newSubmissionOpen === true) {
@@ -136,7 +135,7 @@ function CorrectScreen() {
           table: "participants",
           filter: `contest_id=eq.${contest.id}`,
         },
-        async (payload) => {
+        async () => {
           try {
             const { data: updatedParticipants, error } = await supabase
               .from("participants")
@@ -169,7 +168,7 @@ function CorrectScreen() {
       supabase.removeChannel(contestChannel);
       supabase.removeChannel(participantsChannel);
     };
-  }, [contest?.id, user?.id, navigate]);
+  }, [contest, contest?.id, user?.id, navigate]);
 
   // 4) Prevent back navigation
   useEffect(() => {

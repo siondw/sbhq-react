@@ -1,28 +1,24 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback } from 'react';
 import { jwtDecode } from 'jwt-decode';
 
 
 const UserContext = createContext({});
 
 export const UserProvider = ({ children }) => {
-    const [user, setUser] = useState(null);
+    const [user, setUser] = useState(() => {
+        const token = localStorage.getItem('jwtToken');
+        return token ? jwtDecode(token) : null;
+    });
 
-    const loginUser = (token) => {
+    const loginUser = useCallback((token) => {
         localStorage.setItem('jwtToken', token); // Store new token
         const decoded = jwtDecode(token);
         setUser(decoded);
-    };
+    }, []);
 
-    const logoutUser = () => {
+    const logoutUser = useCallback(() => {
         localStorage.removeItem('jwtToken'); // Clear token from storage
         setUser(null); // Reset user state
-    };
-
-    useEffect(() => {
-        const token = localStorage.getItem('jwtToken');
-        if (token) {
-            loginUser(token); // Decode and set user from token
-        }
     }, []);
 
     return (

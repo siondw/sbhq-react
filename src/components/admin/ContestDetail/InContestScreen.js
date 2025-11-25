@@ -96,7 +96,7 @@ function InContestScreen() {
           table: "participants",
           filter: `contest_id=eq.${contestId}`,
         },
-        async (payload) => {
+        async () => {
           // You can inspect payload.old / payload.new if you want to be more specific
           // about changes to the 'active' field.
           // For instance:
