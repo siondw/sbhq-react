@@ -69,98 +69,151 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
 
+
+```
 ```
 sbhq
-├─ .gitignore
 ├─ package-lock.json
 ├─ package.json
+├─ Project-Specs.md
 ├─ public
+│  ├─ android-chrome-192x192.png
+│  ├─ android-chrome-512x512.png
+│  ├─ apple-touch-icon.png
+│  ├─ favicon-16x16.png
+│  ├─ favicon-32x32.png
 │  ├─ favicon.ico
 │  ├─ index.html
-│  ├─ logo192.png
-│  ├─ logo512.png
 │  ├─ manifest.json
-│  └─ robots.txt
+│  ├─ robots.txt
+│  └─ site.webmanifest
 ├─ README.md
-└─ src
-   ├─ assets
-   │  ├─ ball.gif
-   │  ├─ catch_nobg.gif
-   │  ├─ check.svg
-   │  ├─ DollarSignIcon.svg
-   │  ├─ gear.svg
-   │  ├─ hidepass.svg
-   │  ├─ leaderboard.svg
-   │  ├─ person.svg
-   │  ├─ triangle.svg
-   │  ├─ trophy.png
-   │  ├─ trophy.svg
-   │  └─ x.svg
-   ├─ components
-   │  ├─ AnswerOption
-   │  │  ├─ AnswerOption.js
-   │  │  └─ AnswerOption.module.css
-   │  ├─ AnswersContainer
-   │  │  ├─ AnswersContainer.js
-   │  │  └─ AnswersContainer.module.css
-   │  ├─ CustomButton
-   │  │  ├─ LargeButton.js
-   │  │  └─ LargeButton.module.css
-   │  ├─ GameStatsSummary
-   │  │  ├─ GameStatsSummary.js
-   │  │  └─ GameStatsSummary.module.css
-   │  ├─ Header
-   │  │  ├─ Header.js
-   │  │  └─ Header.module.css
-   │  ├─ LoginForm
-   │  │  └─ LoginForm.js
-   │  ├─ MainText
-   │  │  ├─ MainText.js
-   │  │  └─ MainText.module.css
-   │  ├─ PinInput
-   │  │  ├─ PinInput.js
-   │  │  └─ PinInput.module.css
-   │  ├─ RegistrationForm
-   │  │  ├─ RegistrationForm.js
-   │  │  └─ RegistrationForm.module.css
-   │  ├─ SelectionIndicator
-   │  │  ├─ SelectionIndicator.js
-   │  │  └─ SelectionIndicator.module.css
-   │  └─ SVG.js
-   ├─ contexts
-   │  ├─ AuthContext.js
-   │  └─ UserContext.js
-   ├─ firebase.js
-   ├─ index.css
-   ├─ index.js
-   ├─ logo.svg
-   ├─ reportWebVitals.js
-   ├─ screens
-   │  ├─ Correct
-   │  │  ├─ CorrectScreen.js
-   │  │  └─ CorrectScreen.module.css
-   │  ├─ Eliminated
-   │  │  ├─ EliminatedScreen.js
-   │  │  └─ EliminatedScreen.module.css
-   │  ├─ Login
-   │  │  └─ LoginScreen.js
-   │  ├─ Pregame
-   │  │  ├─ PregameScreen.js
-   │  │  └─ PregameScreen.module.css
-   │  ├─ Question
-   │  │  ├─ QuestionScreen.js
-   │  │  └─ QuestionScreen.module.css
-   │  ├─ Registration
-   │  │  ├─ RegistrationScreen.js
-   │  │  └─ RegistrationScreen.module.css
-   │  ├─ Submitted
-   │  │  ├─ SubmittedScreen.js
-   │  │  └─ SubmittedScreen.module.css
-   │  └─ VerificationScreen
-   │     ├─ VerificationScreen.js
-   │     └─ VerificationScreen.module.css
-   ├─ services
-   │  └─ UserServices.js
-   └─ setupTests.js
+├─ src
+│  ├─ assets
+│  │  ├─ ball.gif
+│  │  ├─ catch_nobg.gif
+│  │  ├─ check.svg
+│  │  ├─ DollarSignIcon.svg
+│  │  ├─ gear.svg
+│  │  ├─ hidepass.svg
+│  │  ├─ leaderboard.svg
+│  │  ├─ person.svg
+│  │  ├─ triangle.svg
+│  │  ├─ trophy.png
+│  │  ├─ trophy.svg
+│  │  └─ x.svg
+│  ├─ components
+│  │  ├─ admin
+│  │  │  ├─ ContestDetail
+│  │  │  │  ├─ InContestScreen.js
+│  │  │  │  └─ InContestScreen.module.css
+│  │  │  ├─ CreateContestModal
+│  │  │  │  ├─ CreateContestModal.js
+│  │  │  │  └─ CreateContestModal.module.css
+│  │  │  ├─ InContest
+│  │  │  │  ├─ CurrentQuestionView
+│  │  │  │  │  ├─ CurrentQuestionView.js
+│  │  │  │  │  └─ CurrentQuestionView.module.css
+│  │  │  │  ├─ QuestionList
+│  │  │  │  │  ├─ QuestionList.js
+│  │  │  │  │  └─ QuestionList.module.css
+│  │  │  │  ├─ QuestionModal
+│  │  │  │  │  ├─ QuestionModal.js
+│  │  │  │  │  └─ QuestionModal.module.css
+│  │  │  │  ├─ StatCard
+│  │  │  │  │  ├─ StatCard.js
+│  │  │  │  │  └─ StatCard.module.css
+│  │  │  │  └─ SubheaderToggles
+│  │  │  │     ├─ SubheaderToggles.js
+│  │  │  │     └─ SubheaderToggles.module.css
+│  │  │  └─ Overview
+│  │  │     ├─ OverviewScreen.js
+│  │  │     └─ OverviewScreen.module.css
+│  │  ├─ AnswerOption
+│  │  │  ├─ AnswerOption.js
+│  │  │  └─ AnswerOption.module.css
+│  │  ├─ AnswersContainer
+│  │  │  ├─ AnswersContainer.js
+│  │  │  └─ AnswersContainer.module.css
+│  │  ├─ AuthForm
+│  │  │  ├─ AuthForm.js
+│  │  │  └─ AuthForm.module.css
+│  │  ├─ ContestCard
+│  │  │  ├─ ContestCard.js
+│  │  │  └─ ContestCard.module.css
+│  │  ├─ CustomButton
+│  │  │  ├─ LargeButton.js
+│  │  │  └─ LargeButton.module.css
+│  │  ├─ GameStatsSummary
+│  │  │  ├─ GameStatsSummary.js
+│  │  │  └─ GameStatsSummary.module.css
+│  │  ├─ Header
+│  │  │  ├─ Header.js
+│  │  │  └─ Header.module.css
+│  │  ├─ MainText
+│  │  │  ├─ MainText.js
+│  │  │  └─ MainText.module.css
+│  │  ├─ PinInput
+│  │  │  ├─ PinInput.js
+│  │  │  └─ PinInput.module.css
+│  │  ├─ PlayersList
+│  │  │  ├─ PlayersList.js
+│  │  │  └─ PlayersList.module.css
+│  │  ├─ ProtectedRoute
+│  │  │  └─ ProtectedRoute.js
+│  │  ├─ SelectionIndicator
+│  │  │  ├─ SelectionIndicator.js
+│  │  │  └─ SelectionIndicator.module.css
+│  │  ├─ SVG.js
+│  │  └─ UsernameInput
+│  │     ├─ UsernameInput.js
+│  │     └─ UsernameInput.module.css
+│  ├─ contexts
+│  │  ├─ AuthContext.js
+│  │  └─ UserContext.js
+│  ├─ hooks
+│  │  ├─ useCheckElimination.js
+│  │  └─ useRequireState.js
+│  ├─ index.css
+│  ├─ index.js
+│  ├─ logo.svg
+│  ├─ reportWebVitals.js
+│  ├─ screens
+│  │  ├─ Admin
+│  │  │  ├─ AdminScreen.js
+│  │  │  └─ AdminScreen.module.css
+│  │  ├─ Auth
+│  │  │  ├─ AuthScreen.js
+│  │  │  └─ AuthScreen.module.css
+│  │  ├─ Correct
+│  │  │  ├─ CorrectScreen.js
+│  │  │  └─ CorrectScreen.module.css
+│  │  ├─ Eliminated
+│  │  │  ├─ EliminatedScreen.js
+│  │  │  └─ EliminatedScreen.module.css
+│  │  ├─ JoinContests
+│  │  │  ├─ JoinContestsScreen.js
+│  │  │  └─ JoinContestsScreen.module.css
+│  │  ├─ Lobby
+│  │  │  ├─ LobbyScreen.js
+│  │  │  └─ LobbyScreen.module.css
+│  │  ├─ Pregame
+│  │  │  ├─ PregameScreen.js
+│  │  │  └─ PregameScreen.module.css
+│  │  ├─ Question
+│  │  │  ├─ QuestionScreen.js
+│  │  │  └─ QuestionScreen.module.css
+│  │  ├─ Submitted
+│  │  │  ├─ SubmittedScreen.js
+│  │  │  └─ SubmittedScreen.module.css
+│  │  └─ VerificationScreen
+│  │     ├─ VerificationScreen.js
+│  │     └─ VerificationScreen.module.css
+│  ├─ setupTests.js
+│  └─ supabase.js
+└─ structure
+   ├─ .project_structure_filter
+   ├─ .project_structure_ignore
+   └─ project_structure_filtered.txt
 
 ```
