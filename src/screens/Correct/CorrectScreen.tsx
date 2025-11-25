@@ -53,12 +53,20 @@ function CorrectScreen() {
     };
 
     fetchOnMount();
-  }, [contest, navigate, currentRound]);
+  }, [contest?.id, navigate, currentRound]);
 
   useEffect(() => {
     if (!contest?.id || !user?.id) return;
 
     const fetchParticipants = async () => {
+      type Participant = {
+        id: string;
+        user_id: string;
+        active: boolean;
+        contest_id: string;
+        elimination_round: number | null;
+      };
+
       try {
         const { data: participants, error } = await supabase
           .from('participants')
@@ -68,10 +76,10 @@ function CorrectScreen() {
         if (error) throw error;
         if (!participants) return;
 
-        const activePlayers = participants.filter((p: any) => p.active).length;
+        const activePlayers = (participants as Participant[]).filter((p) => p.active).length;
         setNumberOfRemainingPlayers(activePlayers);
 
-        const userParticipant = participants.find((p: any) => p.user_id === user.id);
+        const userParticipant = (participants as Participant[]).find((p) => p.user_id === user.id);
         if (!userParticipant || !userParticipant.active) {
           navigate('/eliminated', { replace: true });
           return;
@@ -129,6 +137,14 @@ function CorrectScreen() {
         },
         async () => {
           try {
+            type Participant = {
+              id: string;
+              user_id: string;
+              active: boolean;
+              contest_id: string;
+              elimination_round: number | null;
+            };
+
             const { data: updatedParticipants, error } = await supabase
               .from('participants')
               .select('*')
@@ -136,10 +152,13 @@ function CorrectScreen() {
 
             if (error || !updatedParticipants) return;
 
-            const activeCount = updatedParticipants.filter((p: any) => p.active).length;
+            const activeCount = (updatedParticipants as Participant[]).filter((p) => p.active)
+              .length;
             setNumberOfRemainingPlayers(activeCount);
 
-            const userParticipant = updatedParticipants.find((p: any) => p.user_id === user.id);
+            const userParticipant = (updatedParticipants as Participant[]).find(
+              (p) => p.user_id === user.id
+            );
             if (!userParticipant || !userParticipant.active) {
               navigate('/eliminated', { replace: true });
             }
@@ -154,7 +173,7 @@ function CorrectScreen() {
       supabase.removeChannel(contestChannel);
       supabase.removeChannel(participantsChannel);
     };
-  }, [contest, user?.id, navigate]);
+  }, [contest?.id, user?.id, navigate]);
 
   useEffect(() => {
     const blockBack = () => {

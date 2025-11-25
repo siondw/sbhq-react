@@ -11,6 +11,12 @@ type LocationState = {
   contest: ContestRow;
 };
 
+type ParticipantWithUser = {
+  user_id: string;
+  active: boolean;
+  users?: { username: string | null } | null;
+};
+
 function LobbyScreen() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -96,7 +102,9 @@ function LobbyScreen() {
       if (error) throw error;
 
       const activePlayers =
-        data?.map((participant: any) => participant.users?.username).filter(Boolean) || [];
+        (data as ParticipantWithUser[] | null)?.map(
+          (participant) => participant.users?.username
+        ).filter(Boolean) || [];
       setPlayers(activePlayers);
     } catch (err) {
       console.error('Failed to fetch participants:', (err as Error).message);

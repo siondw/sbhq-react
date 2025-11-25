@@ -24,7 +24,9 @@ function VerificationScreen() {
       try {
         const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
         if (sessionError || !sessionData?.session) {
-          throw new Error('Failed to get current session');
+          throw new Error(
+            `Failed to get current session: ${sessionError?.message || 'Unknown error'}`
+          );
         }
 
         const { user } = sessionData.session;
