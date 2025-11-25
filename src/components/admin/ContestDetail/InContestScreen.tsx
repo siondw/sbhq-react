@@ -337,7 +337,7 @@ function InContestScreen() {
 
       {/* Add back button before closing wrapper div */}
       <button className={styles.backButton} onClick={() => navigate("/admin")}>
-        <- Back to Contests
+        &larr; Back to Contests
       </button>
     </div>
   );
