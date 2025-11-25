@@ -25,6 +25,7 @@ function LobbyScreen() {
     if (!contest?.id) return;
 
     const setupRealtimeListener = () => {
+      // TODO: Replace any-cast once Supabase typings expose postgres_changes channel handler shape.
       const channel = (supabase.channel(`contest-updates-${contest.id}`) as any)
         .on(
           'postgres_changes',

@@ -18,7 +18,7 @@ type Question = {
 
 function QuestionScreen() {
   const navigate = useNavigate();
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, isLoading: isAuthLoading } = useAuth();
   const { contest } = useRequireState(['contest'], '/login') as { contest: ContestRow };
 
   const [submissionsOpen, setSubmissionsOpen] = useState(true);
@@ -215,7 +215,7 @@ function QuestionScreen() {
   };
 
   // 6) Loading states
-  if (authLoading) return <div>Loading user information...</div>;
+  if (isAuthLoading) return <div>Loading user information...</div>;
   if (loadingQuestions) return <div>Loading questions...</div>;
   if (errorFetchingQuestions) return <div>Error: {errorFetchingQuestions}</div>;
 

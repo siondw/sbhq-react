@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { jwtDecode, JwtPayload } from 'jwt-decode';
 
 interface UserContextValue {
@@ -12,23 +12,23 @@ const UserContext = createContext<UserContextValue | undefined>(undefined);
 export const UserProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
   const [user, setUser] = useState<JwtPayload | null>(null);
 
-  const loginUser = (token: string) => {
+  const loginUser = useCallback((token: string) => {
     localStorage.setItem('jwtToken', token);
     const decoded = jwtDecode<JwtPayload>(token);
     setUser(decoded);
-  };
+  }, []);
 
-  const logoutUser = () => {
+  const logoutUser = useCallback(() => {
     localStorage.removeItem('jwtToken');
     setUser(null);
-  };
+  }, []);
 
   useEffect(() => {
     const token = localStorage.getItem('jwtToken');
     if (token) {
       loginUser(token);
     }
-  }, []);
+  }, [loginUser]);
 
   return (
     <UserContext.Provider value={{ user, loginUser, logoutUser }}>
