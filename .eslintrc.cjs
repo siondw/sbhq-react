@@ -25,6 +25,13 @@ module.exports = {
     '@typescript-eslint/no-explicit-any': 'warn',
     '@typescript-eslint/explicit-module-boundary-types': 'off',
     'no-console': ['warn', { allow: ['error', 'warn'] }],
+    'no-restricted-syntax': [
+      'error',
+      {
+        selector: "TSAsExpression TSAsExpression[typeAnnotation.typeName.name='unknown']",
+        message: "Do not use 'as unknown as <type>'. This pattern is unsafe.",
+      },
+    ],
   },
   settings: {
     react: {

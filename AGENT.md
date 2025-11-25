@@ -12,3 +12,6 @@ PowerShell scripts live in `scripts/`. Run them from repo root with `pwsh`.
 - Create feature branch from main: `pwsh ./scripts/feature.ps1 -Name "my feature"`
 - Sync current (or provided) branch with main: `pwsh ./scripts/sync.ps1 [-Branch branch-name]`
 - Commit and push (blocks on main unless -AllowMain): `pwsh ./scripts/push.ps1 -Message "chore: add scripts" [-AllowMain]`
+
+## Code Hygiene
+- Avoid the unsafe pattern `as unknown as <Type>`; lint rule `no-restricted-syntax` blocks it.
