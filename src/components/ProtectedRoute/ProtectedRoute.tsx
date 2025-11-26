@@ -2,20 +2,21 @@ import React from "react";
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 
-function ProtectedRoute({ adminOnly = false }) {
+interface ProtectedRouteProps {
+  adminOnly?: boolean;
+}
+
+function ProtectedRoute({ adminOnly = false }: ProtectedRouteProps) {
   const { user, role } = useAuth();
 
-  // Check if the user is authenticated
   if (!user) {
     return <Navigate to="/" replace />;
   }
 
-  // Check if the user is an admin (for admin-only routes)
   if (adminOnly && role !== "admin") {
     return <Navigate to="/" replace />;
   }
 
-  // If authenticated and authorized, render the protected content
   return <Outlet />;
 }
 

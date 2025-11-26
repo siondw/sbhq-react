@@ -2,8 +2,7 @@ import React from "react";
 import styles from "./Header.module.css";
 import { useAuth } from '../../contexts/AuthContext';
 
-import MySvgComponent from "../SVG.js"
-
+import MySvgComponent from "../SVG";
 
 function Header() {
   const { user } = useAuth();
@@ -11,12 +10,11 @@ function Header() {
   return (
     <header className={styles.header}>
       <div className={styles.icons}>
-        <MySvgComponent height="16px" width="16px" />
+        <MySvgComponent iconType="trophy" height="16px" width="16px" />
         <div style={{ fontSize: '14px' }}>Superbowl HQ</div>
       </div>
-      {/* Check if the user exists before adding it */}
       <div className={styles.userName}>
-        {user ? user.displayName : 'Guest'}
+        {user ? user.user_metadata?.full_name || user.email || 'User' : 'Guest'}
       </div>
     </header>
   );
