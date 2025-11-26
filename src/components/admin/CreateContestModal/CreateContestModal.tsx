@@ -1,15 +1,20 @@
-import React, { useState } from "react";
+import React, { useState, FormEvent } from "react";
 import { supabase } from "../../../supabase";
 import styles from "./CreateContestModal.module.css";
 
-function CreateContestModal({ onClose, onCreated }) {
+interface CreateContestModalProps {
+  onClose: () => void;
+  onCreated: () => void;
+}
+
+function CreateContestModal({ onClose, onCreated }: CreateContestModalProps) {
   const [name, setName] = useState("");
   const [date, setDate] = useState(""); // Expected "YYYY-MM-DDTHH:mm"
   const [price, setPrice] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
-  async function handleSubmit(e) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
 
@@ -22,7 +27,7 @@ function CreateContestModal({ onClose, onCreated }) {
       setError("Please choose a date and time.");
       return;
     }
-    if (!price || isNaN(price)) {
+    if (!price || isNaN(Number(price))) {
       setError("Please provide a valid numeric price.");
       return;
     }

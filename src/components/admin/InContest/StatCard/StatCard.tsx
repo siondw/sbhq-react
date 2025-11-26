@@ -1,8 +1,12 @@
-// src/components/admin/InContest/StatCard.js
 import React from "react";
 import styles from "./StatCard.module.css";
 
-function StatCard({ value, label }) {
+interface StatCardProps {
+  value: number | string;
+  label: string;
+}
+
+function StatCard({ value, label }: StatCardProps) {
   return (
     <div className={styles.statCard}>
       <div className={styles.value}>{value}</div>
