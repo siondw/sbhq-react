@@ -23,7 +23,12 @@ import AdminScreen from "./screens/Admin/AdminScreen";
 import OverviewScreen from "./components/admin/Overview/OverviewScreen";
 import ContestDetail from "./components/admin/ContestDetail/InContestScreen";
 
-const root = ReactDOM.createRoot(document.getElementById("root"));
+const container = document.getElementById("root");
+if (!container) {
+  throw new Error("Root container missing");
+}
+
+const root = ReactDOM.createRoot(container);
 root.render(
   <React.StrictMode>
     <Router>
