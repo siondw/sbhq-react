@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 
 import { supabase } from "../../supabase";
 import Header from "../../components/Header/Header";
@@ -9,20 +10,26 @@ import styles from "./CorrectScreen.module.css";
 
 import { useAuth } from "../../contexts/AuthContext";
 import useRequireState from "../../hooks/useRequireState";
+import type { ContestRow } from "../../types/sbhq";
+
+type Participant = {
+  id: string;
+  user_id: string;
+  active: boolean;
+  contest_id: string;
+  elimination_round: number | null;
+};
 
 function CorrectScreen() {
   const navigate = useNavigate();
 
-  // Ensure we have `contest` in location.state, otherwise redirect
-  const { contest } = useRequireState(["contest"], "/");
-  const { user, loading: authLoading } = useAuth();
+  const { contest } = useRequireState<{ contest: ContestRow }>(["contest"], "/");
+  const { user, isLoading: authLoading } = useAuth();
 
-  // We'll display the round number if needed
-  const [currentRound, setCurrentRound] = useState(contest?.current_round ?? 1);
+  const [currentRound, setCurrentRound] = useState<number>(contest?.current_round ?? 1);
   const [numberOfRemainingPlayers, setNumberOfRemainingPlayers] = useState(0);
   const [loadingPlayers, setLoadingPlayers] = useState(true);
 
-  // 1) Check contest state on mount for refresh fallback
   useEffect(() => {
     if (!contest?.id) return;
 
@@ -43,21 +50,20 @@ function CorrectScreen() {
           navigate("/question", {
             replace: true,
             state: {
-              contest: { ...contest, ...data }, // Merge updated data into state
+              contest: { ...contest, ...data },
             },
           });
         } else {
-          setCurrentRound(data?.current_round || currentRound); // Sync round if needed
+          setCurrentRound(data?.current_round || currentRound);
         }
       } catch (err) {
-        console.error("Failed to fetch contest state on refresh:", err.message);
+        console.error("Failed to fetch contest state on refresh:", (err as Error).message);
       }
     };
 
     fetchOnMount();
   }, [contest, contest?.id, navigate, currentRound]);
 
-  // 2) Fetch participants & see if user is still active
   useEffect(() => {
     if (!contest?.id || !user?.id) return;
 
@@ -71,12 +77,11 @@ function CorrectScreen() {
         if (error) throw error;
         if (!participants) return;
 
-        // Count how many are active
-        const activePlayers = participants.filter((p) => p.active).length;
+        const participantRows = participants as Participant[];
+        const activePlayers = participantRows.filter((p) => p.active).length;
         setNumberOfRemainingPlayers(activePlayers);
 
-        // Check if *this* user is still active
-        const userParticipant = participants.find((p) => p.user_id === user.id);
+        const userParticipant = participantRows.find((p) => p.user_id === user.id);
         if (!userParticipant || !userParticipant.active) {
           navigate("/eliminated", { replace: true });
           return;
@@ -92,11 +97,9 @@ function CorrectScreen() {
     fetchParticipants();
   }, [contest, contest?.id, user?.id, navigate]);
 
-  // 3) Subscribe to real-time updates in `contests` and `participants`
   useEffect(() => {
     if (!contest?.id || !user?.id) return;
 
-    // Listen for changes in the `contests` table for this contest
     const contestChannel = supabase
       .channel(`contest-${contest.id}`)
       .on(
@@ -107,24 +110,24 @@ function CorrectScreen() {
           table: "contests",
           filter: `id=eq.${contest.id}`,
         },
-        async (payload) => {
-          const newSubmissionOpen = payload.new.submission_open;
+        async (payload: RealtimePostgresChangesPayload<ContestRow>) => {
+          const newRow = payload.new as ContestRow | undefined;
+          const newSubmissionOpen = newRow?.submission_open;
 
           if (newSubmissionOpen === true) {
             navigate("/question", {
               replace: true,
               state: {
-                contest: { ...contest, ...payload.new },
+                contest: { ...contest, ...newRow },
               },
             });
-          } else {
-            setCurrentRound(payload.new.current_round);
+          } else if (newRow?.current_round) {
+            setCurrentRound(newRow.current_round);
           }
         }
       )
       .subscribe();
 
-    // Listen for updates to participants in this contest
     const participantsChannel = supabase
       .channel(`participants-${contest.id}`)
       .on(
@@ -144,15 +147,11 @@ function CorrectScreen() {
 
             if (error || !updatedParticipants) return;
 
-            // Recount how many are active
-            const activeCount = updatedParticipants.filter((p) => p.active)
-              .length;
+            const participantRows = updatedParticipants as Participant[];
+            const activeCount = participantRows.filter((p) => p.active).length;
             setNumberOfRemainingPlayers(activeCount);
 
-            // If the user is now inactive, eliminate them
-            const userParticipant = updatedParticipants.find(
-              (p) => p.user_id === user.id
-            );
+            const userParticipant = participantRows.find((p) => p.user_id === user.id);
             if (!userParticipant || !userParticipant.active) {
               navigate("/eliminated", { replace: true });
             }
@@ -163,14 +162,12 @@ function CorrectScreen() {
       )
       .subscribe();
 
-    // Cleanup on unmount
     return () => {
       supabase.removeChannel(contestChannel);
       supabase.removeChannel(participantsChannel);
     };
   }, [contest, contest?.id, user?.id, navigate]);
 
-  // 4) Prevent back navigation
   useEffect(() => {
     const blockBack = () => {
       window.history.pushState(null, document.title, window.location.href);
@@ -179,19 +176,17 @@ function CorrectScreen() {
     return () => window.removeEventListener("popstate", blockBack);
   }, []);
 
-  // If still loading user info or the participant data
   if (authLoading || loadingPlayers) {
     return <div>Loading...</div>;
   }
 
-  // Render the “Correct” screen
   return (
     <div className={styles.correctScreen}>
       <Header />
       <div className={styles.content}>
         <div className={styles.textWithIcon}>
           <span className={styles.correctText}>Correct</span>
-          <span className={styles.checkMarkIcon}>✔️</span>
+          <span className={styles.checkMarkIcon}>✓</span>
         </div>
         <MainText
           header=""

@@ -7,22 +7,26 @@ import styles from "./QuestionScreen.module.css";
 import { useAuth } from "../../contexts/AuthContext";
 import useRequireState from "../../hooks/useRequireState";
 import { supabase } from "../../supabase";
+import type { ContestRow, QuestionRow } from "../../types/sbhq";
+
+type Question = Pick<QuestionRow, "id" | "question" | "options" | "round">;
 
 function QuestionScreen() {
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
-  const { contest } = useRequireState(["contest"], "/login");
+  const { user, isLoading: authLoading } = useAuth();
+  const { contest } = useRequireState<{ contest: ContestRow }>(["contest"], "/login");
 
-  const [questions, setQuestions] = useState([]);
+  const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [loadingQuestions, setLoadingQuestions] = useState(true);
-  const [errorFetchingQuestions, setErrorFetchingQuestions] = useState(null);
-  const [currentRound, setCurrentRound] = useState(null);
+  const [errorFetchingQuestions, setErrorFetchingQuestions] = useState<string | null>(null);
+  const [currentRound, setCurrentRound] = useState<number | null>(null);
 
   // We'll store a local error message if an inactive user tries to submit
   const [inactiveError, setInactiveError] = useState("");
 
   const handleBlankSubmission = useCallback(async () => {
+    if (!user?.id) return;
     try {
       const { data: participant, error: participantError } = await supabase
         .from("participants")
@@ -49,9 +53,9 @@ function QuestionScreen() {
         throw new Error("Failed to submit blank answer.");
       }
     } catch (err) {
-      console.error("Error submitting blank answer:", err.message);
+      console.error("Error submitting blank answer:", (err as Error).message);
     }
-  }, [contest.id, currentRound, user.id]);
+  }, [contest.id, currentRound, user?.id]);
 
   // 1) On mount, fetch the current contest data & questions
   useEffect(() => {
@@ -72,7 +76,6 @@ function QuestionScreen() {
 
         setCurrentRound(contestData.current_round);
 
-        // If submissions are closed, auto-submit blank & go to eliminated
         if (!contestData.submission_open) {
           await handleBlankSubmission();
           navigate("/eliminated", { state: { contest } });
@@ -91,10 +94,10 @@ function QuestionScreen() {
           setQuestions([]);
           setErrorFetchingQuestions("No questions found for this round.");
         } else {
-          setQuestions(questionsData);
+          setQuestions(questionsData as Question[]);
         }
       } catch (err) {
-        console.error("Error fetching contest data:", err.message);
+        console.error("Error fetching contest data:", (err as Error).message);
         setErrorFetchingQuestions("There was an error fetching contest data.");
       } finally {
         setLoadingQuestions(false);
@@ -129,7 +132,11 @@ function QuestionScreen() {
   }, [contest, navigate, handleBlankSubmission]);
 
   // 4) Handle Submit
-  const handleSubmit = async (selectedAnswer, questionId) => {
+  const handleSubmit = async (selectedAnswer: string, questionId: string) => {
+    if (!user?.id) {
+      setInactiveError("You must be logged in to submit.");
+      return;
+    }
     setInactiveError("");
   
     if (!selectedAnswer) {
@@ -176,7 +183,7 @@ function QuestionScreen() {
         },
       });
     } catch (err) {
-      console.error("Error during submission:", err.message);
+      console.error("Error during submission:", (err as Error).message);
       alert("There was an error submitting your answer. Please try again.");
     }
   };
@@ -213,9 +220,7 @@ function QuestionScreen() {
           {currentQuestion && (
             <AnswersContainer
               answers={questionAnswers}
-              onSubmit={(selectedAnswer) =>
-                handleSubmit(selectedAnswer, currentQuestion.id)
-              }
+              onSubmit={(selectedAnswer: string) => handleSubmit(selectedAnswer, currentQuestion.id)}
             />
           )}
           {questions.length > 1 && (

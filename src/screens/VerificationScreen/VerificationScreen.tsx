@@ -5,14 +5,15 @@ import MainText from "../../components/MainText/MainText";
 import UsernameInput from "../../components/UsernameInput/UsernameInput";
 import styles from "./VerificationScreen.module.css";
 import { supabase } from "../../supabase";
+import type { Role } from "../../types/sbhq";
 
 function VerificationScreen() {
   const navigate = useNavigate();
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [userHasUsername, setUserHasUsername] = useState(false);
-  const [currentUserId, setCurrentUserId] = useState(null);
-  const [role, setRole] = useState(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [role, setRole] = useState<Role>(null);
   const hasFetchedData = useRef(false);
 
   useEffect(() => {
@@ -49,8 +50,8 @@ function VerificationScreen() {
           }, 1000);
         }
       } catch (err) {
-        console.error("Error in fetchUserData:", err.message);
-        setError(err.message || "An unexpected error occurred.");
+        console.error("Error in fetchUserData:", (err as Error).message);
+        setError((err as Error).message || "An unexpected error occurred.");
       } finally {
         setIsLoading(false);
       }
@@ -63,7 +64,7 @@ function VerificationScreen() {
     };
   }, [navigate]);
 
-  const handleUsernameSubmit = async (username) => {
+  const handleUsernameSubmit = async (username: string) => {
     setIsLoading(true);
     try {
       const { error } = await supabase
@@ -77,8 +78,8 @@ function VerificationScreen() {
       const redirectPath = role === 'admin' ? '/admin' : '/join-contests';
       navigate(redirectPath);
     } catch (err) {
-      console.error("Error in handleUsernameSubmit:", err.message);
-      setError(err.message || "An unexpected error occurred.");
+      console.error("Error in handleUsernameSubmit:", (err as Error).message);
+      setError((err as Error).message || "An unexpected error occurred.");
     } finally {
       setIsLoading(false);
     }
