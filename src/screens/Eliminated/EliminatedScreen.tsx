@@ -5,18 +5,19 @@ import styles from "./EliminatedScreen.module.css";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "../../supabase";
 import { useAuth } from "../../contexts/AuthContext";
+import type { ContestRow } from "../../types/sbhq";
 
 function EliminatedScreen() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth(); // Access the authenticated user from AuthContext
+  const { user } = useAuth();
 
-  const { contest } = location.state || {};
+  const { contest } = (location.state || {}) as { contest?: ContestRow };
 
-  const [pollingCount, setPollingCount] = useState(0); // Track number of polls
-  const [hasNavigated, setHasNavigated] = useState(false); // Avoid multiple navigations
-  const maxPollingCount = 10; // 5 minutes (10 polls at 30-second intervals)
-  const pollingInterval = 30000; // 30 seconds
+  const [pollingCount, setPollingCount] = useState(0);
+  const [hasNavigated, setHasNavigated] = useState(false);
+  const maxPollingCount = 10;
+  const pollingInterval = 30000;
 
   useEffect(() => {
     if (!contest || !user) {
@@ -26,11 +27,10 @@ function EliminatedScreen() {
 
     const pollForReinstatement = async () => {
       try {
-        // Poll the participant's status
         const { data, error } = await supabase
           .from("participants")
           .select("active, elimination_round")
-          .eq("user_id", user.id) // Use the user ID from useAuth
+          .eq("user_id", user.id)
           .eq("contest_id", contest.id)
           .single();
 
@@ -44,7 +44,7 @@ function EliminatedScreen() {
           navigate("/correct", { replace: true, state: { contest } });
         }
       } catch (err) {
-        console.error("Error during polling:", err.message);
+        console.error("Error during polling:", (err as Error).message);
       }
     };
 
@@ -57,10 +57,10 @@ function EliminatedScreen() {
       }
     }, pollingInterval);
 
-    return () => clearInterval(interval); // Cleanup interval on component unmount
+    return () => clearInterval(interval);
   }, [contest, user, navigate, pollingCount, hasNavigated]);
 
-  const gradientStyle = "linear-gradient(167deg, #710117 29.79%, #54627B 90.89%)"; // Example gradient
+  const gradientStyle = "linear-gradient(167deg, #710117 29.79%, #54627B 90.89%)";
 
   return (
     <div className={styles.eliminatedScreen}>
@@ -68,13 +68,9 @@ function EliminatedScreen() {
       <div className={styles.content}>
         <div className={styles.textWithIcon}>
           <span className={styles.eliminatedText}>Eliminated</span>
-          <span className={styles.xIcon}>❌</span> {/* Added x emoji */}
+          <span className={styles.xIcon}>✗</span>
         </div>
-        <MainText
-          header=""
-          subheader="Thanks for playing!"
-          gradient={gradientStyle}
-        />
+        <MainText header="" subheader="Thanks for playing!" gradient={gradientStyle} />
       </div>
     </div>
   );

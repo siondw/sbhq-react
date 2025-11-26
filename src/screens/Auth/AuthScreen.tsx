@@ -11,10 +11,7 @@ function AuthScreen() {
         <Header />
       </div>
       <div className={styles.screenContent}>
-        <MainText
-          header="Welcome!"
-          subheader="Sign in to continue."
-        />
+        <MainText header="Welcome!" subheader="Sign in to continue." />
         <AuthForm />
       </div>
     </div>

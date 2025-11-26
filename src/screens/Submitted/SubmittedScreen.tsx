@@ -5,16 +5,22 @@ import styles from "./SubmittedScreen.module.css";
 import ballGif from "../../assets/ball.gif";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "../../supabase";
+import type { ContestRow } from "../../types/sbhq";
+import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 
 function SubmittedScreen() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const { contest, questionId, selectedAnswer } = location.state || {};
+  const { contest, questionId, selectedAnswer } = (location.state || {}) as {
+    contest?: ContestRow;
+    questionId?: string;
+    selectedAnswer?: string;
+  };
 
-  const [correctAnswer, setCorrectAnswer] = useState(null);
+  const [correctAnswer, setCorrectAnswer] = useState<string | null>(null);
   const [statusChecked, setStatusChecked] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const [hasNavigated, setHasNavigated] = useState(false);
 
   // Validate required state and redirect if missing
@@ -46,7 +52,7 @@ function SubmittedScreen() {
           setStatusChecked(true);
         }
       } catch (err) {
-        console.error("Error fetching correct answer:", err.message);
+        console.error("Error fetching correct answer:", (err as Error).message);
         setError("Error fetching correct answer.");
       }
     };
@@ -68,10 +74,11 @@ function SubmittedScreen() {
           table: "questions",
           filter: `id=eq.${questionId}`,
         },
-        (payload) => {
-          const updatedCorrectOption = payload.new.correct_option;
+        (payload: RealtimePostgresChangesPayload<{ correct_option: string | null }>) => {
+          const updatedCorrectOption =
+            (payload.new as { correct_option: string | null } | undefined)?.correct_option;
 
-          if (updatedCorrectOption !== null) {
+          if (updatedCorrectOption !== null && updatedCorrectOption !== undefined) {
             setCorrectAnswer(updatedCorrectOption);
             setStatusChecked(true);
           }
@@ -102,9 +109,9 @@ function SubmittedScreen() {
             .single();
 
           if (error) {
-            console.error("Error during manual poll:", error);
-            return;
-          }
+          console.error("Error during manual poll:", error);
+          return;
+        }
 
           if (data?.correct_option !== null) {
             setCorrectAnswer(data.correct_option);
@@ -113,7 +120,7 @@ function SubmittedScreen() {
 
           setupRealtimeListener();
         } catch (err) {
-          console.error("Error fetching correct answer during visibility check:", err.message);
+          console.error("Error fetching correct answer during visibility check:", (err as Error).message);
         }
       }
     };

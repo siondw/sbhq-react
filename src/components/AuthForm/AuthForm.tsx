@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, FormEvent } from "react";
 import LargeButton from "../CustomButton/LargeButton";
 import styles from "./AuthForm.module.css";
 import { supabase } from "../../supabase";
@@ -8,7 +8,7 @@ function AuthForm() {
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
-  const handleEmailSubmit = async (event) => {
+  const handleEmailSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setSuccessMessage("");
     setErrorMessage("");
@@ -36,8 +36,12 @@ function AuthForm() {
       setSuccessMessage(
         "Magic link sent! Check your email to log in or register."
       );
-    } catch (error) {
-      setErrorMessage(error.message || "Failed to send magic link.");
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        setErrorMessage(error.message || "Failed to send magic link.");
+      } else {
+        setErrorMessage("Failed to send magic link.");
+      }
     }
   };
 
@@ -53,8 +57,12 @@ function AuthForm() {
       if (error) {
         throw error;
       }
-    } catch (error) {
-      setErrorMessage(error.message || "Failed to sign in with Google.");
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        setErrorMessage(error.message || "Failed to sign in with Google.");
+      } else {
+        setErrorMessage("Failed to sign in with Google.");
+      }
     }
   };
 

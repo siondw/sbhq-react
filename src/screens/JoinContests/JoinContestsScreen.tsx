@@ -5,12 +5,15 @@ import ContestCard from "../../components/ContestCard/ContestCard";
 import styles from "./JoinContestsScreen.module.css";
 import { supabase } from "../../supabase";
 import { useAuth } from "../../contexts/AuthContext";
+import type { ContestRow, ParticipantRow } from "../../types/sbhq";
+
+type ContestWithParticipants = ContestRow & { participants?: Array<Partial<ParticipantRow>> };
 
 function JoinContestsScreen() {
   const navigate = useNavigate();
   const { user } = useAuth(); // Get the user from the updated AuthContext
-  const [contests, setContests] = useState([]);
-  const [error, setError] = useState(null);
+  const [contests, setContests] = useState<ContestWithParticipants[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true); // Track loading state
 
   // Fetch contests initially
@@ -36,9 +39,9 @@ function JoinContestsScreen() {
 
         if (error) throw error;
 
-        setContests(data || []);
+        setContests((data as ContestWithParticipants[]) || []);
       } catch (err) {
-        console.error("Failed to fetch contests:", err.message);
+        console.error("Failed to fetch contests:", (err as Error).message);
         setError("Failed to load contests. Please try again later.");
       } finally {
         setIsLoading(false);
@@ -86,7 +89,7 @@ function JoinContestsScreen() {
           navigate("/lobby", { state: { contest: openContests[0] } });
         }
       } catch (err) {
-        console.error("Failed to check open lobbies:", err.message);
+        console.error("Failed to check open lobbies:", (err as Error).message);
       }
     };
 
@@ -100,7 +103,7 @@ function JoinContestsScreen() {
   }, [navigate, user]);
 
   // Handle joining a contest
-  const handleJoinContest = async (contestId) => {
+  const handleJoinContest = async (contestId: string) => {
     if (!user) {
       setError("User is not authenticated. Please log in again.");
       return;
@@ -132,13 +135,13 @@ function JoinContestsScreen() {
         )
       );
     } catch (err) {
-      console.error("Failed to join contest:", err.message);
+      console.error("Failed to join contest:", (err as Error).message);
       setError("Failed to join contest. Please try again later.");
     }
   };
 
   // Check if the user is registered
-  const isUserRegistered = (contest) => {
+  const isUserRegistered = (contest: ContestWithParticipants) => {
     return (
       Array.isArray(contest.participants) &&
       contest.participants.some((participant) => participant?.user_id === user?.id)

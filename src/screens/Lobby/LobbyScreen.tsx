@@ -5,13 +5,14 @@ import MainText from "../../components/MainText/MainText";
 import PlayerList from "../../components/PlayersList/PlayersList";
 import styles from "./LobbyScreen.module.css";
 import { supabase } from "../../supabase";
+import type { ContestRow } from "../../types/sbhq";
 
 function LobbyScreen() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { contest } = location.state; // Access contest object directly from location state
+  const { contest } = (location.state || {}) as { contest?: ContestRow }; // Access contest object directly from location state
   const gradientStyle = "linear-gradient(167deg, #54627B, #303845)";
-  const [players, setPlayers] = useState([]);
+  const [players, setPlayers] = useState<string[]>([]);
   const [timeRemaining, setTimeRemaining] = useState(0);
 
   const fetchParticipants = useCallback(async () => {
@@ -29,11 +30,15 @@ function LobbyScreen() {
 
       if (error) throw error;
 
+      type ParticipantWithUser = { users?: { username?: string | null } | null };
+      const participantRows = ((data as ParticipantWithUser[]) || []) as ParticipantWithUser[];
       const activePlayers =
-        data?.map((participant) => participant.users.username) || [];
+        participantRows
+          .map((participant) => participant.users?.username || "")
+          .filter((name): name is string => Boolean(name)) || [];
       setPlayers(activePlayers);
     } catch (err) {
-      console.error("Failed to fetch participants:", err.message);
+      console.error("Failed to fetch participants:", (err as Error).message);
     }
   }, [contest?.id]);
 
@@ -49,7 +54,7 @@ function LobbyScreen() {
           table: "contests",
           filter: `id=eq.${contest.id}`,
         },
-        (payload) => {
+        (payload: { new: ContestRow }) => {
           const updatedContest = payload.new;
           if (updatedContest?.submission_open) {
             navigate("/question", { state: { contest: updatedContest } });
@@ -62,6 +67,8 @@ function LobbyScreen() {
   // Listen for updates to 'submission_open' in the current contest
   useEffect(() => {
     if (!contest?.id) return;
+
+    let subscription: ReturnType<typeof setupRealtimeListener> | null = null;
 
     const checkSubmissionOpen = async () => {
       try {
@@ -79,26 +86,19 @@ function LobbyScreen() {
         if (data?.submission_open) {
           navigate("/question", { state: { contest } });
         } else {
-          const subscription = setupRealtimeListener();
+          subscription = setupRealtimeListener();
           fetchParticipants();
-
-          return () => {
-            if (subscription) supabase.removeChannel(subscription);
-          };
         }
       } catch (err) {
-        console.error("Failed to check submission_open:", err.message);
+        console.error("Failed to check submission_open:", (err as Error).message);
       }
-      return undefined;
     };
 
-    const cleanup = checkSubmissionOpen();
+    checkSubmissionOpen();
 
     return () => {
-      if (cleanup) {
-        cleanup();
-      } else {
-        supabase.removeChannel(`contest-updates-${contest.id}`);
+      if (subscription) {
+        supabase.removeChannel(subscription);
       }
     };
   }, [contest, contest?.id, fetchParticipants, navigate, setupRealtimeListener]);
@@ -115,25 +115,24 @@ function LobbyScreen() {
 
       if (remaining <= 0) {
         setTimeRemaining(0); // Prevent negative values
-        clearInterval(timerRef.current); // Use timerRef to clear interval
+        if (timerRef) clearInterval(timerRef);
       }
     };
 
-    const timerRef = { current: null }; // Use an object reference to store the timer
-    timerRef.current = setInterval(updateTimer, 1000);
+    const timerRef = setInterval(updateTimer, 1000);
 
     updateTimer(); // Set initial timer value
 
-    return () => clearInterval(timerRef.current); // Cleanup on unmount
+    return () => clearInterval(timerRef);
   }, [contest?.start_time]);
 
   // Helper functions
-  function calculateTimeRemaining(startTime) {
+  function calculateTimeRemaining(startTime: number) {
     const now = new Date().getTime();
     return Math.max(startTime - now, 0); // Ensure no negative values
   }
 
-  function formatTime(ms) {
+  function formatTime(ms: number) {
     const totalSeconds = Math.floor(ms / 1000);
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
@@ -162,10 +161,7 @@ function LobbyScreen() {
             {formatTime(timeRemaining)}
           </span>
         </div>
-        <MainText
-          subheader="until the game starts..."
-          gradient={gradientStyle}
-        />
+        <MainText header=" " subheader="until the game starts..." gradient={gradientStyle} />
         <PlayerList players={players} />
       </div>
     </div>
