@@ -7,11 +7,8 @@ function ContestCard({ contest, onJoin, isRegistered }) {
   let formattedTime;
   try {
     const date = parseISO(contest.start_time); // Parse ISO string to Date
-    console.log("Parsed date:", date);
     const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone; // Get user timezone
-    console.log("User timezone:", userTimeZone);
     formattedTime = formatInTimeZone(date, userTimeZone, "MM/dd @ h:mm a"); // Format date in user's local time
-    console.log("Formatted time:", formattedTime);
   } catch (error) {
     console.error("Error formatting date:", contest.start_time, error);
     formattedTime = "Invalid date";
