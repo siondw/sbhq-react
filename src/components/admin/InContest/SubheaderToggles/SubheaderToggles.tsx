@@ -1,6 +1,16 @@
-// src/components/admin/InContest/SubheaderToggles.js
 import React from "react";
 import styles from "./SubheaderToggles.module.css";
+
+interface SubheaderTogglesProps {
+  lobbyOpen: boolean;
+  submissionOpen: boolean;
+  finished: boolean;
+  onToggleLobby: () => void;
+  onToggleSubmission: () => void;
+  onToggleFinished: () => void;
+  roundNumber: number;
+  onIncrementRound: (delta: number) => void;
+}
 
 function SubheaderToggles({
   lobbyOpen,
@@ -11,23 +21,19 @@ function SubheaderToggles({
   onToggleFinished,
   roundNumber,
   onIncrementRound,
-}) {
+}: SubheaderTogglesProps) {
   return (
     <div className={styles.subheader}>
       <div className={styles.toggleItem}>
         <span>Lobby:</span>
-        <button 
-          onClick={onToggleLobby} 
-          className={styles.toggleButton}
-          data-active={lobbyOpen}
-        >
+        <button onClick={onToggleLobby} className={styles.toggleButton} data-active={lobbyOpen}>
           {lobbyOpen ? "ON" : "OFF"}
         </button>
       </div>
       <div className={styles.toggleItem}>
         <span>Submissions:</span>
-        <button 
-          onClick={onToggleSubmission} 
+        <button
+          onClick={onToggleSubmission}
           className={styles.toggleButton}
           data-submissions={submissionOpen}
         >
@@ -36,20 +42,15 @@ function SubheaderToggles({
       </div>
       <div className={styles.toggleItem}>
         <span>Finished:</span>
-        <button 
-          onClick={onToggleFinished} 
-          className={styles.toggleButton}
-          data-finished={finished}
-        >
+        <button onClick={onToggleFinished} className={styles.toggleButton} data-finished={finished}>
           {finished ? "ON" : "OFF"}
         </button>
       </div>
 
       <div className={styles.roundContainer}>
         <span>Round: {roundNumber}</span>
-        {/* Up/down arrows */}
-        <button onClick={() => onIncrementRound(+1)}>▲</button>
-        <button onClick={() => onIncrementRound(-1)}>▼</button>
+        <button onClick={() => onIncrementRound(+1)}>+</button>
+        <button onClick={() => onIncrementRound(-1)}>-</button>
       </div>
     </div>
   );

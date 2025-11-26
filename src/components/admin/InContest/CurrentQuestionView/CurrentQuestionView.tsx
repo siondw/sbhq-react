@@ -1,20 +1,30 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { supabase } from "../../../../supabase"; // adjust path
+import { supabase } from "../../../../supabase";
 import styles from "./CurrentQuestionView.module.css";
+import type { QuestionRow } from "../../../../types/sbhq";
 
-function CurrentQuestionView({
-  roundNumber,
-  submissionOpen,
-  questions,
-  onCreateQuestion,
-}) {
+type Question = QuestionRow & { options?: string[] | Record<string, string> | null; correct_option?: string | null };
+
+interface CurrentQuestionViewProps {
+  roundNumber: number;
+  submissionOpen: boolean;
+  questions: Question[];
+  onCreateQuestion: () => void;
+}
+
+function CurrentQuestionView({ roundNumber, submissionOpen, questions, onCreateQuestion }: CurrentQuestionViewProps) {
   const [pendingCorrectOption, setPendingCorrectOption] = useState("");
-  const [answersDistribution, setAnswersDistribution] = useState({});
+  const [answersDistribution, setAnswersDistribution] = useState<Record<string, number>>({});
   const [totalAnswers, setTotalAnswers] = useState(0);
 
   // Identify the question for this round (may be undefined)
   const currentQ = questions.find((q) => q.round === roundNumber);
   const questionId = currentQ?.id;
+  const normalizedOptions = currentQ
+    ? Array.isArray(currentQ.options)
+      ? currentQ.options
+      : Object.values(currentQ.options || {})
+    : [];
 
   // Fetch answers distribution
   const fetchAnswersDistribution = useCallback(async () => {
@@ -31,14 +41,14 @@ function CurrentQuestionView({
 
       if (error) throw error;
 
-      const counts = {};
-      answers.forEach((row) => {
-        const ans = row.answer || "No Answer";
+      const counts: Record<string, number> = {};
+      (answers || []).forEach((row) => {
+        const ans = (row as { answer?: string }).answer || "No Answer";
         counts[ans] = (counts[ans] || 0) + 1;
       });
 
       setAnswersDistribution(counts);
-      setTotalAnswers(Object.values(counts).reduce((sum, val) => sum + val, 0));
+      setTotalAnswers(Object.values(counts).reduce((sum, val) => sum + (val as number), 0));
     } catch (err) {
       console.error("Error fetching distribution:", err);
     }
@@ -82,10 +92,10 @@ function CurrentQuestionView({
     );
   }
 
-  const { question, options, correct_option } = currentQ;
+  const { question, correct_option } = currentQ;
 
   async function handleSetCorrectOption() {
-    if (!pendingCorrectOption) {
+    if (!pendingCorrectOption || !questionId) {
       alert("Please select an option to mark correct.");
       return;
     }
@@ -117,7 +127,7 @@ function CurrentQuestionView({
       {submissionOpen ? (
         <div className={styles.openPhase}>
           <p>Submissions are open! (Real-time distribution):</p>
-          {options?.map((opt) => (
+          {normalizedOptions?.map((opt) => (
             <div key={opt} className={styles.optionRow}>
               <strong>{opt}:</strong> {answersDistribution[opt] || 0} response(s)
             </div>
@@ -132,7 +142,7 @@ function CurrentQuestionView({
             <>
               <p>Submissions closed. Set the correct option:</p>
               <div className={styles.optionsList}>
-                {options?.map((opt, idx) => (
+                {normalizedOptions?.map((opt, idx) => (
                   <label key={idx} className={styles.optionItem}>
                     <input
                       type="radio"

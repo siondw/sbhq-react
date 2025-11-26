@@ -4,16 +4,21 @@ import { supabase } from "../../../supabase";
 import styles from "./OverviewScreen.module.css";
 import CreateContestModal from "../CreateContestModal/CreateContestModal";
 import { formatInTimeZone } from "date-fns-tz";
+import type { ContestRow } from "../../../types/sbhq";
+
+interface ContestWithParticipants extends ContestRow {
+  participants?: Array<{ user_id: string; active: boolean }>;
+}
 
 function OverviewScreen() {
   const navigate = useNavigate();
 
   // State management
-  const [contests, setContests] = useState([]);
-  const [filteredContests, setFilteredContests] = useState([]);
+  const [contests, setContests] = useState<ContestWithParticipants[]>([]);
+  const [filteredContests, setFilteredContests] = useState<ContestWithParticipants[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [countsMap, setCountsMap] = useState({});
+  const [error, setError] = useState<string | null>(null);
+  const [countsMap, setCountsMap] = useState<Record<string, number>>({});
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   // Tabs for filtering
@@ -34,7 +39,7 @@ function OverviewScreen() {
         setContests(data || []);
         setFilteredContests(data || []);
       } catch (err) {
-        setError(err.message);
+        setError((err as Error).message);
       } finally {
         setLoading(false);
       }
@@ -64,7 +69,7 @@ function OverviewScreen() {
   }, [activeTab, contests]);
 
   // 3) Delete a contest
-  async function handleDeleteContest(contestId) {
+  async function handleDeleteContest(contestId: string) {
     const confirmed = window.confirm(
       "Are you sure you want to delete this contest?"
     );
@@ -80,17 +85,17 @@ function OverviewScreen() {
 
       setContests((prev) => prev.filter((c) => c.id !== contestId));
     } catch (err) {
-      alert("Error deleting contest: " + err.message);
+      alert("Error deleting contest: " + (err as Error).message);
     }
   }
 
   // 4) Navigate to contest details
-  function handleCardClick(contestId) {
+  function handleCardClick(contestId: string) {
     navigate(`/admin/${contestId}`);
   }
 
   // 5) Fetch participant counts
-  async function getParticipantCount(contestId) {
+  async function getParticipantCount(contestId: string) {
     try {
       const { count, error } = await supabase
         .from("participants")
@@ -107,8 +112,8 @@ function OverviewScreen() {
 
   useEffect(() => {
     async function fetchAllCounts() {
-      const map = {};
-      for (let contest of contests) {
+      const map: Record<string, number> = {};
+      for (const contest of contests) {
         const count = await getParticipantCount(contest.id);
         map[contest.id] = count;
       }
@@ -118,7 +123,7 @@ function OverviewScreen() {
   }, [contests]);
 
   // 6) Format start time
-  function formatStartTime(timeString) {
+  function formatStartTime(timeString: string | null | undefined) {
     if (!timeString) return "No time";
 
     try {
@@ -141,8 +146,8 @@ function OverviewScreen() {
 
       if (error) throw error;
 
-      setContests(data || []);
-      setFilteredContests(data || []);
+      setContests((data as ContestWithParticipants[]) || []);
+      setFilteredContests((data as ContestWithParticipants[]) || []);
     } catch (err) {
       console.error("Error refreshing contests after creation:", err);
     }
